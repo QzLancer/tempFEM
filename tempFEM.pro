@@ -26,12 +26,29 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        widget.cpp
+        widget.cpp \
+    temp2dfemcore.cpp
 
 HEADERS += \
-        widget.h
+        widget.h \
+    temp2dfemcore.h \
+    datatype.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../armadillo/examples/lib_win64/ -lblas_win64_MT
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../armadillo/examples/lib_win64/ -lblas_win64_MT
+else:unix: LIBS += -L$$PWD/../../../armadillo/examples/lib_win64/ -lblas_win64_MT
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../armadillo/examples/lib_win64/ -llapack_win64_MT
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../armadillo/examples/lib_win64/ -llapack_win64_MT
+else:unix: LIBS += -L$$PWD/../../../armadillo/examples/lib_win64/ -llapack_win64_MT
+
+INCLUDEPATH += $$PWD/../../../armadillo/include
+DEPENDPATH += $$PWD/../../../armadillo/include
+
+CONFIG +=console
