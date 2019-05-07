@@ -1,7 +1,7 @@
 #include "widget.h"
 #include <QApplication>
-#include "temp2dfemcore.h"
 
+int Drawnephogram();
 
 int main(int argc, char *argv[])
 {
@@ -10,10 +10,7 @@ int main(int argc, char *argv[])
     w.show();
 
     CTemp2DFEMCore temp;
-    temp.Load2DMeshCOMSOL("D:\\tempFEM\\tempFEM0\\tempFEM\\mesh_heatexcg.mphtxt");
-    temp.preCalculation();
-    temp.setCondition();
-    temp.StaticAxisAssemble();
-    temp.DirectSolve();
+    temp.Load2DMeshCOMSOL("D:\\tempFEM\\tempFEM0\\tempFEM\\mesh_contactor.mphtxt");
+
     return a.exec();
 }
