@@ -3,6 +3,7 @@
 #include "datatype.h"
 #include "armadillo"
 #include "widget.h"
+#include <QVector>
 
 using namespace arma;
 class CTemp2DFEMCore
@@ -18,6 +19,7 @@ public:
     int DirectSolve();  //直接法求解
     int PostProcessing();
     int GenerateMetisMesh(int partition);
+    int drawBDR();  //绘制边界
 
 private:
     int m_num_pts;
@@ -34,6 +36,7 @@ private:
     QCustomPlot *customplot;
     QCPGraph *graph1;   //绘制边界，分网，负载区域
     QList<QCPCurve*> *mesh;
+    QList<QCPCurve*> *mesh1;
     const char *meshfile;
     char metismesh[256];
     int *epartTable;    //保存单元在第几个分区

@@ -12,7 +12,7 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
-
+     QCustomPlot *customplot;
 };
 
 #endif // WIDGET_H

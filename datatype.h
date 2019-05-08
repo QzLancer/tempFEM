@@ -42,6 +42,7 @@ struct CTriElement{
 enum Demo{
     SOLVESIMPLE,
     SOLVECONTACTOR,
-    METISTEST
+    METISTEST,
+    BDRTEST //查看负载和边界区域是否正确
 };
 #endif // DATATYPE_H

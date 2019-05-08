@@ -12,8 +12,9 @@ CTemp2DFEMCore::CTemp2DFEMCore(Widget *parent, const char *fn):mp_2DNode(nullptr
     mp_EdgEle(nullptr),
     mp_TriEle(nullptr),
     thePlot(parent),
-    customplot(new QCustomPlot),
+    customplot(thePlot->customplot),
     mesh(new QList<QCPCurve*>),
+    mesh1(new QList<QCPCurve*>),
     meshfile(fn),
     epartTable(new int),
     npartTable(new int)
@@ -169,12 +170,12 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL()
         fgets(ch, 256, fp);
     }
     for (int i = 0; i < m_num_TriEle; i++){
-        if(fscanf_s(fp, "%d \n", &mp_TriEle[0].domain) != 1){
+        if(fscanf_s(fp, "%d \n", &mp_TriEle[i].domain) != 1){
             qDebug() << "Error: reading tridomain!";
             return 1;
         }
         else{
-            mp_TriEle[i].domain++;
+//            mp_TriEle[i].domain++;
         }
     }
     fclose(fp);
@@ -269,15 +270,19 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
         for(int i = 0; i < m_num_TriEle; i++){
             if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
                 mp_TriEle[i].cond = 400;
+//                qDebug() << "Domain1: " << i;
             }
             else if(mp_TriEle[i].domain == 2 | mp_TriEle[i].domain == 3 | mp_TriEle[i].domain == 4 | mp_TriEle[i].domain == 6 | mp_TriEle[i].domain == 8){
                 mp_TriEle[i].cond = 76.2;
+//                qDebug() << "Domain2: " << i;
             }
             else if(mp_TriEle[i].domain == 1 | mp_TriEle[i].domain == 7 | mp_TriEle[i].domain == 9){
                 mp_TriEle[i].cond = 0.26;
+//                qDebug() << "Domain3: " << i;
             }
             else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
                 mp_TriEle->cond = 0.26;
+//                qDebug() << "Domain4: " << i;
             }   //实际上这里应该是空气，暂时用尼龙的热导率代替
         }
         //第三类边界条件设置
@@ -287,7 +292,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
                 mp_EdgEle[i].h = 20;
                 mp_EdgEle[i].Text = 293.15;
             }
-    //        cout << mp_EdgEle[i].bdr << endl;
+//            cout << mp_EdgEle[i].bdr << endl;
         }
     }
     return 0;
@@ -438,24 +443,24 @@ int CTemp2DFEMCore::GenerateMetisMesh(int partition)
     }
     FILE *fp = nullptr;
 
-    QVBoxLayout *layout = new QVBoxLayout(thePlot);
-    layout->addWidget(customplot);
-    customplot->xAxis->setLabel("x");
-    customplot->xAxis->setRange(0, 0.09);
-    customplot->xAxis->setAutoTickStep(false);
-    customplot->xAxis->setTicks(false);
-    customplot->yAxis->setLabel("y");
-    customplot->yAxis->setRange(-0.09, 0.09);
-    customplot->xAxis2->setTicks(false);
+//    QVBoxLayout *layout = new QVBoxLayout(thePlot);
+//    layout->addWidget(customplot);
+//    customplot->xAxis->setLabel("x");
+//    customplot->xAxis->setRange(0, 0.09);
+//    customplot->xAxis->setAutoTickStep(false);
+//    customplot->xAxis->setTicks(false);
+//    customplot->yAxis->setLabel("y");
+//    customplot->yAxis->setRange(-0.09, 0.09);
+//    customplot->xAxis2->setTicks(false);
     customplot->yAxis->setScaleRatio(customplot->xAxis, 1.0);
 
-    customplot->yAxis->setAutoTickStep(false);
-    customplot->yAxis->setAutoTickLabels(false);
-    customplot->yAxis->setTicks(false);
-    customplot->yAxis->grid()->setVisible(false);
-    customplot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
-    customplot->yAxis2->setTicks(false);
-    customplot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+//    customplot->yAxis->setAutoTickStep(false);
+//    customplot->yAxis->setAutoTickLabels(false);
+//    customplot->yAxis->setTicks(false);
+//    customplot->yAxis->grid()->setVisible(false);
+//    customplot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
+//    customplot->yAxis2->setTicks(false);
+//    customplot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
     //生成metis的输入分网文件
     strcpy(metismesh,meshfile);
@@ -533,6 +538,65 @@ int CTemp2DFEMCore::GenerateMetisMesh(int partition)
         newCurve->setData(x1,y1);
     }
     customplot->replot();
+    thePlot->setWindowTitle("区域分解");
 //    qApp->processEvents();//强制刷新界面
+    return 0;
+}
+
+int CTemp2DFEMCore::drawBDR()
+{
+    Widget *w1 = new Widget();
+    QCustomPlot *customplot1 = w1->customplot;
+    w1->setWindowTitle("边界单元和负载域");
+    w1->show();
+    customplot1->yAxis->setScaleRatio(customplot->xAxis, 1.0);
+
+    QColor cc[7];
+    cc[0] = QColor(150, 0, 0);
+    cc[1] = QColor(0, 150, 0);
+    cc[2] = QColor(0, 0, 150);
+    cc[3] = QColor(150, 150, 0);
+    cc[4] = QColor(0, 150, 150);
+    cc[5] = QColor(150, 0, 150);
+    cc[6] = QColor(150, 150, 150);
+
+    QCPCurve *curve1 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve1负责边界单元绘制
+
+    for(int i = 0; i < m_num_TriEle; i++){
+        QCPCurve *curve2 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve2负责负载域绘制
+        curve2->setLineStyle(QCPCurve::lsNone );
+        mesh1->push_back(curve2);
+        QVector <double> x1(4);
+        QVector <double> y1(4);
+        for (int j = 0; j < 3; j++) {
+            x1[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
+            y1[j] = mp_2DNode[mp_TriEle[i].n[j]].y;
+        }
+        x1[3] = x1[0];
+        y1[3] = y1[0];
+        if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
+            curve2->setBrush(cc[0]);
+//            mesh->at(i)->setBrush(cc[0]);
+        }
+        else if(mp_TriEle[i].domain == 2 | mp_TriEle[i].domain == 3 | mp_TriEle[i].domain == 4 | mp_TriEle[i].domain == 6 | mp_TriEle[i].domain == 8){
+            curve2->setBrush(cc[1]);
+//            mesh->at(i)->setBrush(cc[1]);
+        }
+        else if(mp_TriEle[i].domain == 1 | mp_TriEle[i].domain == 7 | mp_TriEle[i].domain == 9){
+            curve2->setBrush(cc[2]);
+//            mesh->at(i)->setBrush(cc[2]);
+        }
+        else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
+            curve2->setBrush(cc[3]);
+//            mesh->at(i)->setBrush(cc[3]);
+        }
+        curve2->setData(x1,y1);
+    }
+    customplot1->replot();
+
+
+    //负载域绘制
+
+
     return 0;
 }
