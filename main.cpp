@@ -1,16 +1,56 @@
-#include "widget.h"
 #include <QApplication>
+#include <QDebug>
+#include "temp2dfemcore.h"
 
-int Drawnephogram();
+void solvesimple(Widget *parent);
+void solvecontactor(Widget *parent);
+void metistest(Widget *parent);
+
 
 int main(int argc, char *argv[])
 {
+
+    Demo showWhat = METISTEST;
     QApplication a(argc, argv);
     Widget w;
     w.show();
 
-    CTemp2DFEMCore temp;
-    temp.Load2DMeshCOMSOL("D:\\tempFEM\\tempFEM0\\tempFEM\\mesh_contactor.mphtxt");
+    switch(showWhat){
+        case SOLVESIMPLE:
+            solvesimple(&w);
+        break;
+        case SOLVECONTACTOR:
+            solvecontactor(&w);
+        break;
+        case METISTEST:
+            metistest(&w);
+        break;
+
+    }
 
     return a.exec();
+
+}
+
+void solvesimple(Widget *parent){
+   CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_heatexcg.mphtxt");
+    temp->Load2DMeshCOMSOL();
+    temp->preCalculation();
+    temp->setCondition(SOLVESIMPLE);
+    temp->StaticAxisAssemble();
+    temp->DirectSolve();
+//    temp.PostProcessing(parent);
+}
+
+void solvecontactor(Widget *parent){
+
+}
+
+void metistest(Widget *parent){
+    CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
+    temp->Load2DMeshCOMSOL();
+    temp->preCalculation();
+    temp->setCondition(METISTEST);
+    temp->StaticAxisAssemble();
+    temp->GenerateMetisMesh(4);
 }

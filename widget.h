@@ -2,6 +2,8 @@
 #define WIDGET_H
 
 #include <QWidget>
+#include "qcustomplot/qcustomplot.h"
+//#include "mainwindow.h"
 
 class Widget : public QWidget
 {
@@ -10,6 +12,7 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
+
 };
 
 #endif // WIDGET_H

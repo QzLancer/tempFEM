@@ -17,6 +17,8 @@ struct CEdgElement{
     double x[2]{0};
     double y[2]{0};
     int domain{0};
+    double h;   //传热系数
+    double Text;    //外部温度
     double heatflux{0};   //热通量
     double d{0};  //线单元的长度
     double ravg{0};  //线单元的平均半径
@@ -33,6 +35,13 @@ struct CTriElement{
     double cond{0};
     double Area{0};//单元的面积
     double ravg{0};//轴对称模型时，单元的平均半径
+    double source{0};
     bool LinearFlag{0};//定义逻辑变量LinearFlag，用来判断具体单元是否处于线性区域
+};
+
+enum Demo{
+    SOLVESIMPLE,
+    SOLVECONTACTOR,
+    METISTEST
 };
 #endif // DATATYPE_H

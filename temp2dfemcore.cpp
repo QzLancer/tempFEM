@@ -5,11 +5,18 @@
 #include <math.h>
 #include <iostream>
 #include <vector>
-#include "qcustomplot/qcustomplot.h"
-CTemp2DFEMCore::CTemp2DFEMCore():mp_2DNode(nullptr),
+#include "mpmetis.h"
+
+CTemp2DFEMCore::CTemp2DFEMCore(Widget *parent, const char *fn):mp_2DNode(nullptr),
     mp_VtxEle(nullptr),
     mp_EdgEle(nullptr),
-    mp_TriEle(nullptr)
+    mp_TriEle(nullptr),
+    thePlot(parent),
+    customplot(new QCustomPlot),
+    mesh(new QList<QCPCurve*>),
+    meshfile(fn),
+    epartTable(new int),
+    npartTable(new int)
 {
 
 }
@@ -34,16 +41,17 @@ CTemp2DFEMCore::~CTemp2DFEMCore()
     }
 }
 
-int CTemp2DFEMCore::Load2DMeshCOMSOL(const char *fn)
+int CTemp2DFEMCore::Load2DMeshCOMSOL()
 {
     FILE *fp = nullptr;
     int err;
     char ch[256];
-    err = fopen_s(&fp, fn, "r");
+    err = fopen_s(&fp, meshfile, "r");
     if (!fp) {
         qDebug() << "Error: openning file!";
         return 1;
     }
+
     //--------------Read the head-----------------------------
     for (int i = 0; i < 18; i++) {
         fgets(ch, 256, fp);
@@ -53,6 +61,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL(const char *fn)
         qDebug() << "Error: reading num_bdr_ns!";
         return 1;
     }
+    else qDebug() << m_num_pts << "number of mesh points.";
     mp_2DNode = new C2DNode[m_num_pts];
     int pts_ind;//the beginning of the points index
 
@@ -86,6 +95,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL(const char *fn)
         qDebug() << "Error: reading m_num_VtxEle!";
         return 1;
     }
+    else qDebug() << m_num_VtxEle <<  "number of Vertex elements.";
     fgets(ch, 256, fp);
 //    qDebug() << m_num_VtxEle;
     mp_VtxEle = new CVtxElement[m_num_VtxEle];
@@ -115,6 +125,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL(const char *fn)
         qDebug() <<  "Error: reading m_num_EdgEle";
         return 1;
     }
+    else qDebug() << m_num_EdgEle << "number of Edge elements.";
     mp_EdgEle = new CEdgElement[m_num_EdgEle];
     fgets(ch, 256, fp);
     for (int i = 0; i < m_num_EdgEle; i++){
@@ -144,6 +155,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL(const char *fn)
         qDebug() << "Error: reading m_num_TriEle!";
         return 1;
     }
+    else qDebug() << m_num_TriEle << "number of Triangle elements.";
     fgets(ch, 256, fp);
     mp_TriEle = new CTriElement[m_num_TriEle];
     for (int i = 0; i < m_num_TriEle; i++){
@@ -162,12 +174,14 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL(const char *fn)
             return 1;
         }
         else{
-            mp_TriEle[0].domain++;
+            mp_TriEle[i].domain++;
         }
     }
     fclose(fp);
     S = zeros<mat>(m_num_pts, m_num_pts);
     F = zeros<vec>(m_num_pts);
+
+    qDebug() << "Load2DMeshCOMSOL successfully!";
     return 0;
 }
 
@@ -211,32 +225,71 @@ int CTemp2DFEMCore::preCalculation()
 }
 
 //不同模型主要改写的是这一部分
-int CTemp2DFEMCore::setCondition()
+int CTemp2DFEMCore::setCondition(Demo showWhat)
 {
-    //本模型中只有第一类和第二类边界条件，通过检索线单元来处理
-    for (int i = 0; i < m_num_EdgEle; i++){
-        if(mp_EdgEle[i].domain == 1 || mp_EdgEle[i].domain == 4){
-            mp_EdgEle[i].bdr = 0;
-        }
-        else if(mp_EdgEle[i].domain == 2 || mp_EdgEle[i].domain == 5 || mp_EdgEle[i].domain == 6){
-            mp_EdgEle[i].bdr = 1;
-            for(int j = 0; j < 2; j++){
-                mp_2DNode[mp_EdgEle[i].n[j]].bdr = 1;
-                mp_2DNode[mp_EdgEle[i].n[j]].V = 273.15;
+    if(showWhat == SOLVESIMPLE){
+        qDebug() << "setCondition:SOLVESIMPLE.";
+        //本模型中只有第一类和第二类边界条件，通过检索线单元来处理
+        for (int i = 0; i < m_num_EdgEle; i++){
+            if(mp_EdgEle[i].domain == 1 || mp_EdgEle[i].domain == 4){
+                mp_EdgEle[i].bdr = 0;
+            }
+            else if(mp_EdgEle[i].domain == 2 || mp_EdgEle[i].domain == 5 || mp_EdgEle[i].domain == 6){
+                mp_EdgEle[i].bdr = 1;
+                for(int j = 0; j < 2; j++){
+                    mp_2DNode[mp_EdgEle[i].n[j]].bdr = 1;
+                    mp_2DNode[mp_EdgEle[i].n[j]].V = 273.15;
+                }
+            }
+            else if(mp_EdgEle[i].domain == 3){
+                mp_EdgEle[i].bdr = 2;
+                mp_EdgEle[i].heatflux = 500000;
             }
         }
-        else if(mp_EdgEle[i].domain == 3){
-            mp_EdgEle[i].bdr = 2;
-            mp_EdgEle[i].heatflux = 500000;
+        //三角形单元参数
+        for (int i = 0; i < m_num_TriEle; i++)
+            mp_TriEle[i].cond = 52;
+
+    //    //调试
+    //    for (int i = 0; i < m_num_pts; i++)
+    //        cout << mp_2DNode[i].bdr << endl;
+    }
+    else if(showWhat = METISTEST){
+        qDebug() << "setcondition:SOLVEDDTLM.";
+        //热源设置
+        for(int i = 0; i < m_num_TriEle; i++){
+            if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
+                mp_TriEle[i].source = 500000;
+            }
+            else{
+                mp_TriEle[i].source = 0;
+            }
+        }
+        //热导率设置
+        for(int i = 0; i < m_num_TriEle; i++){
+            if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
+                mp_TriEle[i].cond = 400;
+            }
+            else if(mp_TriEle[i].domain == 2 | mp_TriEle[i].domain == 3 | mp_TriEle[i].domain == 4 | mp_TriEle[i].domain == 6 | mp_TriEle[i].domain == 8){
+                mp_TriEle[i].cond = 76.2;
+            }
+            else if(mp_TriEle[i].domain == 1 | mp_TriEle[i].domain == 7 | mp_TriEle[i].domain == 9){
+                mp_TriEle[i].cond = 0.26;
+            }
+            else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
+                mp_TriEle->cond = 0.26;
+            }   //实际上这里应该是空气，暂时用尼龙的热导率代替
+        }
+        //第三类边界条件设置
+        for(int i = 0; i< m_num_EdgEle; i++){
+            if(mp_EdgEle[i].domain == 2 | mp_EdgEle[i].domain == 9 | mp_EdgEle[i].domain == 49){
+                mp_EdgEle[i].bdr == 3;
+                mp_EdgEle[i].h = 20;
+                mp_EdgEle[i].Text = 293.15;
+            }
+    //        cout << mp_EdgEle[i].bdr << endl;
         }
     }
-    //三角形单元参数
-    for (int i = 0; i < m_num_TriEle; i++)
-        mp_TriEle[i].cond = 52;
-
-//    //调试
-//    for (int i = 0; i < m_num_pts; i++)
-//        cout << mp_2DNode[i].bdr << endl;
     return 0;
 }
 
@@ -247,6 +300,8 @@ int CTemp2DFEMCore::StaticAxisAssemble()
     const double PI = 3.1415926535;
     //三角形单元装配过程
     mat Se = zeros<mat>(3,3);
+//    double Se;
+    double Fe;
     double Fl;
     for(int k = 0; k < m_num_TriEle; k++){
         for(int i = 0; i < 3; i++){
@@ -254,6 +309,8 @@ int CTemp2DFEMCore::StaticAxisAssemble()
                 Se(i,j) = (PI*mp_TriEle[k].cond*mp_TriEle[k].ravg*(mp_TriEle[k].r[i]*mp_TriEle[k].r[j]+mp_TriEle[k].q[i]*mp_TriEle[k].q[j]))/(2*mp_TriEle[k].Area);
                 S(mp_TriEle[k].n[i],mp_TriEle[k].n[j]) = S(mp_TriEle[k].n[i],mp_TriEle[k].n[j]) + Se(i,j);
             }
+            Fe = PI*mp_TriEle[k].source*mp_TriEle[k].Area*(mp_TriEle[k].r[i]+3*mp_TriEle[k].ravg)/6;
+            F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + Fe;
         }
 //        cout << Se << "\n";
     }
@@ -305,71 +362,177 @@ int CTemp2DFEMCore::DirectSolve()
         A(v1[i]) = A1[i];
         mp_2DNode[v1[i]].V = A1[i];
     }
-//    for(int i = 0; i < m_num_pts; i++){
-//        cout << mp_2DNode[i].V << endl;
-//    }
+    for(int i = 0; i < m_num_pts; i++){
+        cout << mp_2DNode[i].V << endl;
+    }
     return 0;
 }
 
-int CTemp2DFEMCore::PostProcessing(QWidget *parent)
+int CTemp2DFEMCore::PostProcessing()
 {
-    QCustomPlot *customPlot = new QCustomPlot(parent);
-    QVBoxLayout *layout = new QVBoxLayout(parent);
-    layout->addWidget(customPlot);
-    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
-    customPlot->axisRect()->setupFullAxesBox(true);
-    customPlot->xAxis->setLabel("x");
-    customPlot->yAxis->setLabel("y");
-    customPlot->xAxis->setRange(0.02,0.1);
-    customPlot->yAxis->setRange(0,0.14);
-    customPlot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
-    customPlot->axisRect()->setupFullAxesBox(true);
-    customPlot->xAxis->setLabel("x");
-    customPlot->yAxis->setLabel("y");
-    //二维插值
+//    QCustomPlot *customPlot = new QCustomPlot(parent);
+//    QVBoxLayout *layout = new QVBoxLayout(parent);
+//    layout->addWidget(customPlot);
+//    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+//    customPlot->axisRect()->setupFullAxesBox(true);
+//    customPlot->xAxis->setLabel("x");
+//    customPlot->yAxis->setLabel("y");
+//    customPlot->xAxis->setRange(0.02,0.1);
+//    customPlot->yAxis->setRange(0,0.14);
+//    customPlot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
+//    customPlot->axisRect()->setupFullAxesBox(true);
+//    customPlot->xAxis->setLabel("x");
+//    customPlot->yAxis->setLabel("y");
+//    //二维插值
 
 
-    // set up the QCPColorMap:
-    QCPColorMap *colorMap = new QCPColorMap(customPlot->xAxis, customPlot->yAxis);
-    int nx = 200;
-    int ny = 200;
-    colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-    colorMap->data()->setRange(QCPRange(-4, 4), QCPRange(-4, 4)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
-    // now we assign some data, by accessing the QCPColorMapData instance of the color map:
-    double x, y, z;
-    for (int xIndex=0; xIndex<nx; ++xIndex)
-    {
-      for (int yIndex=0; yIndex<ny; ++yIndex)
-      {
-        colorMap->data()->cellToCoord(xIndex, yIndex, &x, &y);
-        cout << x << " " << y << endl;
-        double r = 3*qSqrt(x*x+y*y)+1e-2;
-        z = 2*x*(qCos(r+2)/r-qSin(r+2)/r); // the B field strength of dipole radiation (modulo physical constants)
-        colorMap->data()->setCell(xIndex, yIndex, z);
-      }
+//    // set up the QCPColorMap:
+//    QCPColorMap *colorMap = new QCPColorMap(customPlot->xAxis, customPlot->yAxis);
+//    int nx = 200;
+//    int ny = 200;
+//    colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
+//    colorMap->data()->setRange(QCPRange(-4, 4), QCPRange(-4, 4)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+//    // now we assign some data, by accessing the QCPColorMapData instance of the color map:
+//    double x, y, z;
+//    for (int xIndex=0; xIndex<nx; ++xIndex)
+//    {
+//      for (int yIndex=0; yIndex<ny; ++yIndex)
+//      {
+//        colorMap->data()->cellToCoord(xIndex, yIndex, &x, &y);
+//        cout << x << " " << y << endl;
+//        double r = 3*qSqrt(x*x+y*y)+1e-2;
+//        z = 2*x*(qCos(r+2)/r-qSin(r+2)/r); // the B field strength of dipole radiation (modulo physical constants)
+//        colorMap->data()->setCell(xIndex, yIndex, z);
+//      }
+//    }
+
+//    // add a color scale:
+//    QCPColorScale *colorScale = new QCPColorScale(customPlot);
+//    customPlot->plotLayout()->addElement(0, 1, colorScale); // add it to the right of the main axis rect
+//    colorScale->setType(QCPAxis::atRight); // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
+//    colorMap->setColorScale(colorScale); // associate the color map with the color scale
+//    colorScale->axis()->setLabel("Magnetic Field Strength");
+
+//    // set the color gradient of the color map to one of the presets:
+//    colorMap->setGradient(QCPColorGradient::gpPolar);
+//    // we could have also created a QCPColorGradient instance and added own colors to
+//    // the gradient, see the documentation of QCPColorGradient for what's possible.
+
+//    // rescale the data dimension (color) such that all data points lie in the span visualized by the color gradient:
+//    colorMap->rescaleDataRange();
+
+//    // make sure the axis rect and color scale synchronize their bottom and top margins (so they line up):
+//    QCPMarginGroup *marginGroup = new QCPMarginGroup(customPlot);
+//    customPlot->axisRect()->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
+//    colorScale->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
+
+//    // rescale the key (x) and value (y) axes so the whole color map is visible:
+//    customPlot->rescaleAxes();
+    return 0;
+}
+
+int CTemp2DFEMCore::GenerateMetisMesh(int partition)
+{
+    if(meshfile == nullptr){
+        return 1;
     }
+    FILE *fp = nullptr;
 
-    // add a color scale:
-    QCPColorScale *colorScale = new QCPColorScale(customPlot);
-    customPlot->plotLayout()->addElement(0, 1, colorScale); // add it to the right of the main axis rect
-    colorScale->setType(QCPAxis::atRight); // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
-    colorMap->setColorScale(colorScale); // associate the color map with the color scale
-    colorScale->axis()->setLabel("Magnetic Field Strength");
+    QVBoxLayout *layout = new QVBoxLayout(thePlot);
+    layout->addWidget(customplot);
+    customplot->xAxis->setLabel("x");
+    customplot->xAxis->setRange(0, 0.09);
+    customplot->xAxis->setAutoTickStep(false);
+    customplot->xAxis->setTicks(false);
+    customplot->yAxis->setLabel("y");
+    customplot->yAxis->setRange(-0.09, 0.09);
+    customplot->xAxis2->setTicks(false);
+    customplot->yAxis->setScaleRatio(customplot->xAxis, 1.0);
 
-    // set the color gradient of the color map to one of the presets:
-    colorMap->setGradient(QCPColorGradient::gpPolar);
-    // we could have also created a QCPColorGradient instance and added own colors to
-    // the gradient, see the documentation of QCPColorGradient for what's possible.
+    customplot->yAxis->setAutoTickStep(false);
+    customplot->yAxis->setAutoTickLabels(false);
+    customplot->yAxis->setTicks(false);
+    customplot->yAxis->grid()->setVisible(false);
+    customplot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
+    customplot->yAxis2->setTicks(false);
+    customplot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
-    // rescale the data dimension (color) such that all data points lie in the span visualized by the color gradient:
-    colorMap->rescaleDataRange();
+    //生成metis的输入分网文件
+    strcpy(metismesh,meshfile);
+    strcat(metismesh, ".metis");
+    fp = fopen(metismesh, "w+");
+    if(!fp){
+        return 1;
+    }
+    //写入单元数目和单元节点编号（从1开始）
+    fprintf(fp, "%d\n", m_num_TriEle);
+    for(int i = 0; i < m_num_TriEle; i++){
+        fprintf(fp, "%d %d %d \n", mp_TriEle[i].n[0]+1, mp_TriEle[i].n[1]+1, mp_TriEle[i].n[2]+1);
+    }
+    fclose(fp);
+    //调用metis进行分区
+    char part[3];
+    sprintf(part, "%d", partition);
+    char a[] = "QzLancer";
+    char * myargv[] = {a, metismesh, part};
+    mpmetis(3,myargv);
+    //读入单元分区表
+    char epartname[256];
+    sprintf(epartname,"%s.epart.%d",metismesh,partition);
+    fp = fopen(epartname,"r");
+    if(!fp){
+        qDebug()<<"Error in open epart file!";
+        return 1;
+    }
+    if(epartTable){
+        free(epartTable);//释放之前申请的空间
+    }
+    epartTable = (int*)malloc(m_num_TriEle*sizeof(int));
+    for(int i=0;i < m_num_TriEle;++i){
+        fscanf(fp,"%d\n",epartTable+i);
+    }
+    fclose(fp);
+    //读入节点分区表
+    char npartname[256];
+    sprintf(npartname,"%s.npart.%d",metismesh,partition);
+    fp = fopen(npartname,"r");
+    if(!fp){
+        qDebug()<<"Error in open npart file!";
+        return 1;
+    }
+    if(npartTable){
+        free(npartTable);//释放之前申请的空间
+    }
+    npartTable = (int*)malloc(m_num_pts*sizeof(int));
+    for(int i=0;i < m_num_pts;++i){
+        fscanf(fp,"%d\n",npartTable+i);
+    }
+    fclose(fp);
+    //绘制分区之后的分网
+    QColor cc[7];
+    cc[0] = QColor(150, 0, 0);
+    cc[1] = QColor(0, 150, 0);
+    cc[2] = QColor(0, 0, 150);
+    cc[3] = QColor(150, 150, 0);
+    cc[4] = QColor(0, 150, 150);
+    cc[5] = QColor(150, 0, 150);
+    cc[6] = QColor(150, 150, 150);
 
-    // make sure the axis rect and color scale synchronize their bottom and top margins (so they line up):
-    QCPMarginGroup *marginGroup = new QCPMarginGroup(customPlot);
-    customPlot->axisRect()->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
-    colorScale->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
-
-    // rescale the key (x) and value (y) axes so the whole color map is visible:
-    customPlot->rescaleAxes();
+    for(int i=0;i < m_num_TriEle;++i){
+        QCPCurve *newCurve = new QCPCurve(customplot->xAxis, customplot->yAxis);
+        mesh->push_back(newCurve);
+        QVector <double> x1(4);
+        QVector <double> y1(4);
+        for (int j = 0; j < 3; j++) {
+            x1[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
+            y1[j] = mp_2DNode[mp_TriEle[i].n[j]].y;
+        }
+        x1[3] = x1[0];
+        y1[3] = y1[0];
+        newCurve->setBrush(cc[epartTable[i]]);
+        newCurve->setData(x1,y1);
+    }
+    customplot->replot();
+//    qApp->processEvents();//强制刷新界面
     return 0;
 }

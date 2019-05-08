@@ -39,7 +39,8 @@ HEADERS += \
         widget.h \
     temp2dfemcore.h \
     datatype.h \
-    qcustomplot/qcustomplot.h
+    qcustomplot/qcustomplot.h \
+    metis-5.1.0/programs/mpmetis.h
 #    mainwindow.h
 
 # Default rules for deployment.
