@@ -1,6 +1,9 @@
 #ifndef TEMP2DFEMCORE_H
 #define TEMP2DFEMCORE_H
 #include "datatype.h"
+#if !defined(ARMA_32BIT_WORD)
+#define ARMA_32BIT_WORD
+#endif
 #include "armadillo"
 #include "widget.h"
 #include <QVector>
@@ -17,6 +20,7 @@ public:
     int setCondition(Demo showWhat); //根据模型的不同设置边界条件和负载情况
     int StaticAxisAssemble(); //二维轴对称温度场装配
     int DirectSolve();  //直接法求解
+    int DirectSolve1();
     int PostProcessing();
     int GenerateMetisMesh(int partition);
     int drawBDR();  //绘制边界
@@ -41,6 +45,7 @@ private:
     char metismesh[256];
     int *epartTable;    //保存单元在第几个分区
     int *npartTable;    //保存节点在第几个分区
+    sp_mat* X;
 };
 
 #endif // TEMP2DFEMCORE_H

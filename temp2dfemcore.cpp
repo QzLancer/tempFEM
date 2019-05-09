@@ -7,6 +7,8 @@
 #include <vector>
 #include "mpmetis.h"
 #include <QPen>
+#include "slu_ddefs.h"
+#include <iomanip>
 
 CTemp2DFEMCore::CTemp2DFEMCore(Widget *parent, const char *fn):mp_2DNode(nullptr),
     mp_VtxEle(nullptr),
@@ -190,7 +192,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL()
 
 int CTemp2DFEMCore::preCalculation()
 {
-    //计算所有三角形单元的q,r,面积Area,平均半径TriRadius(轴对称模型使用)
+    //计算所有三角形单元的q,r,面积Area,平均半径xavg(轴对称模型使用)
     for(int i = 0; i < m_num_TriEle; i++){
         for(int j = 0; j < 3; j++){
             mp_TriEle[i].x[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
@@ -203,9 +205,9 @@ int CTemp2DFEMCore::preCalculation()
         mp_TriEle[i].r[1] = mp_TriEle[i].x[0]-mp_TriEle[i].x[2];
         mp_TriEle[i].r[2] = mp_TriEle[i].x[1]-mp_TriEle[i].x[0];
         mp_TriEle[i].Area = (mp_TriEle[i].q[0]*mp_TriEle[i].r[1]-mp_TriEle[i].q[1]*mp_TriEle[i].r[0])/2;
-        mp_TriEle[i].ravg = (mp_TriEle[i].x[0]+mp_TriEle[i].x[1]+mp_TriEle[i].x[2])/3;
+        mp_TriEle[i].xavg = (mp_TriEle[i].x[0]+mp_TriEle[i].x[1]+mp_TriEle[i].x[2])/3;
     }
-    //计算所有线单元的长度d，平均半径EdgRadius(轴对称模型使用)
+    //计算所有线单元的长度d，平均半径xavg(轴对称模型使用)
     for(int i = 0; i < m_num_EdgEle; i++){
         for(int j = 0; j < 2; j++){
             mp_EdgEle[i].x[j] = mp_2DNode[mp_EdgEle[i].n[j]].x;
@@ -213,7 +215,7 @@ int CTemp2DFEMCore::preCalculation()
         }
         mp_EdgEle[i].d = std::sqrt(pow(mp_EdgEle[i].x[0]-mp_EdgEle[i].x[1],2)+
                 pow(mp_EdgEle[i].y[0]-mp_EdgEle[i].y[1],2));
-        mp_EdgEle[i].ravg = (mp_EdgEle[i].x[0]+mp_EdgEle[i].x[1])/2;
+        mp_EdgEle[i].xavg = (mp_EdgEle[i].x[0]+mp_EdgEle[i].x[1])/2;
     }
 
    //观察求解的值是否正确
@@ -257,7 +259,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
     //    for (int i = 0; i < m_num_pts; i++)
     //        cout << mp_2DNode[i].bdr << endl;
     }
-    else if(showWhat = METISTEST){
+    else if(showWhat == SOLVECONTACTOR){
         qDebug() << "setcondition:SOLVEDDTLM.";
         //热源设置
         for(int i = 0; i < m_num_TriEle; i++){
@@ -297,6 +299,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
                 mp_EdgEle[i].bdr = 3;
                 mp_EdgEle[i].h = 20;
                 mp_EdgEle[i].Text = 293.15;
+//                qDebug() << i;
             }
 //            cout << mp_EdgEle[i].bdr << endl;
         }
@@ -308,37 +311,83 @@ using namespace arma;
 
 int CTemp2DFEMCore::StaticAxisAssemble()
 {
-    const double PI = 3.1415926535;
+    int pos = 0;
+    int numbdr = 0;
+    for(int i = 0; i < m_num_EdgEle; i++){
+        if(mp_EdgEle[i].bdr == 3) numbdr++;
+    }
+    umat locs(2, 9*m_num_TriEle+4*numbdr);
+    mat vals(1, 9*m_num_TriEle+4*numbdr);
+    std::ofstream mycoutS("..\\tempFEM\\test\\S.txt");
+    std::ofstream mycoutF("..\\tempFEM\\test\\F.txt");
+    std::ofstream mycouth("..\\tempFEM\\test\\h.txt");
+    std::ofstream mycoutText("..\\tempFEM\\test\\Text.txt");
+    std::ofstream mycoutd("..\\tempFEM\\test\\d.txt");
+    std::ofstream mycoutFl("..\\tempFEM\\test\\Fl.txt");
+    std::ofstream mycoutxavg("..\\tempFEM\\test\\xavg.txt");
+    const double PI = 3.14159265358979323846;
     //三角形单元装配过程
-    mat Se = zeros<mat>(3,3);
-//    double Se;
+//    mat Se = zeros<mat>(3,3);
+    double Se;
     double Fe;
-    double Fl;
+    double Sl;
+//    double Fl;
+    vec Fl = zeros<vec>(2);
     for(int k = 0; k < m_num_TriEle; k++){
         for(int i = 0; i < 3; i++){
             for(int j = 0; j < 3; j++){
-                Se(i,j) = (PI*mp_TriEle[k].cond*mp_TriEle[k].ravg*(mp_TriEle[k].r[i]*mp_TriEle[k].r[j]+mp_TriEle[k].q[i]*mp_TriEle[k].q[j]))/(2*mp_TriEle[k].Area);
-                S(mp_TriEle[k].n[i],mp_TriEle[k].n[j]) = S(mp_TriEle[k].n[i],mp_TriEle[k].n[j]) + Se(i,j);
+                Se = (PI*mp_TriEle[k].cond*mp_TriEle[k].xavg*(mp_TriEle[k].r[i]*mp_TriEle[k].r[j]+mp_TriEle[k].q[i]*mp_TriEle[k].q[j]))/(2*mp_TriEle[k].Area);
+                S(mp_TriEle[k].n[i],mp_TriEle[k].n[j]) = S(mp_TriEle[k].n[i],mp_TriEle[k].n[j]) + Se;
+                locs(0, pos) = mp_TriEle[k].n[i];
+                locs(1, pos) = mp_TriEle[k].n[j];
+                vals(0, pos) = Se;
+                ++pos;
             }
-            Fe = PI*mp_TriEle[k].source*mp_TriEle[k].Area*(mp_TriEle[k].r[i]+3*mp_TriEle[k].ravg)/6;
+            Fe = PI*mp_TriEle[k].source*mp_TriEle[k].Area*(mp_TriEle[k].x[i]+3.*mp_TriEle[k].xavg)/6.;
             F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + Fe;
         }
-//        cout << Se << "\n";
     }
+
     //线单元装配过程
     for(int k = 0; k < m_num_EdgEle; k++){
-        if(mp_EdgEle[k].bdr == 2){
-            for(int i = 0; i < 2; i++){
-                Fl = PI*mp_EdgEle[k].heatflux*mp_EdgEle[k].d*(mp_EdgEle[k].x[i]+2*mp_EdgEle[k].ravg)/3;
-                F(mp_EdgEle[k].n[i]) = F(mp_EdgEle[k].n[i])+Fl;
+        for(int i = 0; i < 2; i++){
+            if(mp_EdgEle[k].bdr == 3){
+                for(int j = 0; j < 2; j++){
+                    if(i == j){
+                        Sl = PI*mp_EdgEle[k].h*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg+2*mp_EdgEle[k].x[i])/6.;
+                    }
+                    else{
+                        Sl = PI*mp_EdgEle[k].h*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg)/6.;
+                    }
+//                    cout << Sl << endl;
+                    S(mp_EdgEle[k].n[i], mp_EdgEle[k].n[j]) = S(mp_EdgEle[k].n[i], mp_EdgEle[k].n[j]) + Sl;
+                    locs(0, pos) = mp_EdgEle[k].n[i];
+                    locs(1, pos) = mp_EdgEle[k].n[j];
+                    vals(0, pos) = Sl;
+                    ++pos;
+                }
+                Fl(i) = PI*mp_EdgEle[k].h*mp_EdgEle[k].Text*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg+mp_EdgEle[k].x[i])/3.;
+                F(mp_EdgEle[k].n[i]) = F(mp_EdgEle[k].n[i])+Fl(i);
+            }else if(mp_EdgEle[k].bdr == 2){
+                Fl(i) = PI*mp_EdgEle[k].heatflux*mp_EdgEle[k].d*(mp_EdgEle[k].x[i]+2.*mp_EdgEle[k].xavg)/3.;
+                F(mp_EdgEle[k].n[i]) = F(mp_EdgEle[k].n[i])+Fl(i);
             }
         }
     }
-//    cout << F;
+    qDebug() << "Assemble successful!";
+//    cout << locs;
+//    cout << vals;
+    X = new sp_mat(true, locs, vals, m_num_pts, m_num_pts, true, true);
+
+    double aaa = 0.12134234234535345;
+    mycoutS << S;
+    qDebug()<< F(2)<<aaa;
+    mycoutFl << Fl << endl;
+
     return 0;
 }
 
-//通过直接法来求解包含第二类边界条件的温度场问题
+//通过直接法来求解包含各类边界条件的温度场问题
 int CTemp2DFEMCore::DirectSolve()
 {
     vec A = zeros<vec>(m_num_pts);
@@ -354,11 +403,12 @@ int CTemp2DFEMCore::DirectSolve()
     }
     //删掉第一类边界条件包含的行，重构S和F
     int j = v1.size();
+    vec A1 = zeros<vec>(j);
+    qDebug() << "test";
     mat S1 = zeros<mat>(j, m_num_pts);
     mat S2 = zeros<mat>(j, j);
     vec F1 = zeros<vec>(j);
     vec F2 = zeros<vec>(j);
-    vec A1 = zeros<vec>(j);
     for(int i = 0; i < j; i++){
         S1.row(i) = S.row(v1[i]);
         F1(i) = F(v1[i]);
@@ -369,6 +419,7 @@ int CTemp2DFEMCore::DirectSolve()
         S2.col(i) = S1.col(v1[i]);
     }
     A1 = solve(S2, F1);
+
     for(int i = 0; i < j; i++){
         A(v1[i]) = A1[i];
         mp_2DNode[v1[i]].V = A1[i];
@@ -376,6 +427,71 @@ int CTemp2DFEMCore::DirectSolve()
     for(int i = 0; i < m_num_pts; i++){
         cout << mp_2DNode[i].V << endl;
     }
+
+    return 0;
+}
+
+int CTemp2DFEMCore::DirectSolve1()
+{
+    SuperMatrix sluA;
+    NCformat *Astore;
+    double   *a;
+    int      *asub, *xa;
+    int      *perm_c; /* column permutation vector */
+    int      *perm_r; /* row permutations from partial pivoting */
+    SuperMatrix L;      /* factor L */
+    SuperMatrix U;      /* factor U */
+    SuperMatrix B;
+    int      nrhs, ldx, info, m, n, nnz;
+    double   *rhs;
+    mem_usage_t   mem_usage;
+    superlu_options_t options;
+    SuperLUStat_t stat;
+
+    set_default_options(&options);
+
+    /* create matrix A in Harwell-Boeing format.*/
+    m = m_num_pts; n = m_num_pts; nnz = X->n_nonzero;
+    a = const_cast<double *>(X->values);
+    asub = (int*)const_cast<unsigned int*>(X->row_indices);
+    xa = (int*)const_cast<unsigned int*>(X->col_ptrs);
+    dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
+    Astore = (NCformat *)sluA.Store;
+    printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
+
+    nrhs = 1;
+    if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
+    //将内存拷贝过来
+    //memmove(rhs, unknown_b, 5*sizeof(double));
+    for (int i = 0; i < m; i++){
+        rhs[i] = F(i);
+    }
+    dCreate_Dense_Matrix(&B, m, nrhs, rhs, m, SLU_DN, SLU_D, SLU_GE);
+
+    if (!(perm_c = intMalloc(n))) ABORT("Malloc fails for perm_c[].");
+    if (!(perm_r = intMalloc(m))) ABORT("Malloc fails for perm_r[].");
+
+    /* Initialize the statistics variables. */
+    StatInit(&stat);
+
+    dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
+    if (info == 0) {
+        qDebug()<<"Ok.";
+        /* This is how you could access the solution matrix. */
+        double *sol = (double*)((DNformat*)B.Store)->nzval;
+    }else {
+        qDebug() << "info = " << info;
+    }
+
+//    SUPERLU_FREE(rhs);
+//    SUPERLU_FREE(xact);
+//    SUPERLU_FREE(perm_r);
+//    SUPERLU_FREE(perm_c);
+//    Destroy_CompCol_Matrix(&A);
+//    Destroy_SuperMatrix_Store(&B);
+//    Destroy_SuperNode_Matrix(&L);
+//    Destroy_CompCol_Matrix(&U);
+
     return 0;
 }
 

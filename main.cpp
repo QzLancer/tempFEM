@@ -10,7 +10,7 @@ void bdrtest(Widget *parent);
 int main(int argc, char *argv[])
 {
 
-    Demo showWhat = METISTEST;
+    Demo showWhat = SOLVECONTACTOR;
     QApplication a(argc, argv);
     Widget w;
     w.show();
@@ -46,14 +46,19 @@ void solvesimple(Widget *parent){
 }
 
 void solvecontactor(Widget *parent){
-
+    CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
+    temp->Load2DMeshCOMSOL();
+    temp->preCalculation();
+    temp->setCondition(SOLVECONTACTOR);
+    temp->StaticAxisAssemble();
+    temp->DirectSolve();
 }
 
 void metistest(Widget *parent, int part){
     CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
     temp->Load2DMeshCOMSOL();
     temp->preCalculation();
-    temp->setCondition(METISTEST);
+    temp->setCondition(SOLVECONTACTOR);
     temp->StaticAxisAssemble();
     temp->GenerateMetisMesh(part);
     temp->drawBDR();
@@ -63,7 +68,7 @@ void bdrtest(Widget *parent){
     CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
     temp->Load2DMeshCOMSOL();
     temp->preCalculation();
-    temp->setCondition(METISTEST);
-//    temp->drawBdr();
+    temp->setCondition(SOLVECONTACTOR);
+    temp->drawBDR();
 //    temp->drawLoad();
 }

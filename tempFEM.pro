@@ -71,6 +71,10 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 INCLUDEPATH +=     metis-5.1.0/GKlib\
     metis-5.1.0/include \
     metis-5.1.0/programs \
+    SuperLU_5.2.1/SRC \
+    SuperLU_5.2.1/CBLAS \
 
 
 LIBS += D:\tempFEM\tempFEM0\tempFEM\metis.lib\
+        D:\DDTLM\SuperLU_5.2.1\SuperLU\x64\Release\SuperLU.lib \
+        D:\DDTLM\SuperLU_5.2.1\SuperLU\x64\Release\CBLAS.lib \
