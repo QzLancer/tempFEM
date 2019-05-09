@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include "mpmetis.h"
+#include <QPen>
 
 CTemp2DFEMCore::CTemp2DFEMCore(Widget *parent, const char *fn):mp_2DNode(nullptr),
     mp_VtxEle(nullptr),
@@ -146,6 +147,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL()
         }
         else{
             mp_EdgEle[i].domain++;
+//            qDebug() << "mp_EdgEle: " << mp_EdgEle[i].domain;
         }
     }
     //----------------trinode-----------------------------------
@@ -270,25 +272,29 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
         for(int i = 0; i < m_num_TriEle; i++){
             if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
                 mp_TriEle[i].cond = 400;
+                mp_TriEle[i].Material = 0;
 //                qDebug() << "Domain1: " << i;
             }
             else if(mp_TriEle[i].domain == 2 | mp_TriEle[i].domain == 3 | mp_TriEle[i].domain == 4 | mp_TriEle[i].domain == 6 | mp_TriEle[i].domain == 8){
                 mp_TriEle[i].cond = 76.2;
+                mp_TriEle[i].Material = 1;
 //                qDebug() << "Domain2: " << i;
             }
             else if(mp_TriEle[i].domain == 1 | mp_TriEle[i].domain == 7 | mp_TriEle[i].domain == 9){
                 mp_TriEle[i].cond = 0.26;
+                mp_TriEle[i].Material = 2;
 //                qDebug() << "Domain3: " << i;
             }
             else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
                 mp_TriEle->cond = 0.26;
+                mp_TriEle[i].Material = 3;
 //                qDebug() << "Domain4: " << i;
             }   //实际上这里应该是空气，暂时用尼龙的热导率代替
         }
         //第三类边界条件设置
         for(int i = 0; i< m_num_EdgEle; i++){
             if(mp_EdgEle[i].domain == 2 | mp_EdgEle[i].domain == 9 | mp_EdgEle[i].domain == 49){
-                mp_EdgEle[i].bdr == 3;
+                mp_EdgEle[i].bdr = 3;
                 mp_EdgEle[i].h = 20;
                 mp_EdgEle[i].Text = 293.15;
             }
@@ -560,43 +566,47 @@ int CTemp2DFEMCore::drawBDR()
     cc[5] = QColor(150, 0, 150);
     cc[6] = QColor(150, 150, 150);
 
-    QCPCurve *curve1 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve1负责边界单元绘制
 
-    for(int i = 0; i < m_num_TriEle; i++){
-        QCPCurve *curve2 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve2负责负载域绘制
-        curve2->setLineStyle(QCPCurve::lsNone );
-        mesh1->push_back(curve2);
-        QVector <double> x1(4);
-        QVector <double> y1(4);
-        for (int j = 0; j < 3; j++) {
-            x1[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
-            y1[j] = mp_2DNode[mp_TriEle[i].n[j]].y;
+    //    不同材质区域绘制
+        for(int i = 0; i < m_num_TriEle; i++){
+            QCPCurve *curve2 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve2负责负载域绘制
+            curve2->setLineStyle(QCPCurve::lsNone );
+            mesh1->push_back(curve2);
+            QVector <double> x1(4);
+            QVector <double> y1(4);
+            for (int j = 0; j < 3; j++) {
+                x1[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
+                y1[j] = mp_2DNode[mp_TriEle[i].n[j]].y;
+            }
+            x1[3] = x1[0];
+            y1[3] = y1[0];
+            curve2->setBrush(cc[mp_TriEle[i].Material]);
+            curve2->setData(x1,y1);
         }
-        x1[3] = x1[0];
-        y1[3] = y1[0];
-        if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
-            curve2->setBrush(cc[0]);
-//            mesh->at(i)->setBrush(cc[0]);
-        }
-        else if(mp_TriEle[i].domain == 2 | mp_TriEle[i].domain == 3 | mp_TriEle[i].domain == 4 | mp_TriEle[i].domain == 6 | mp_TriEle[i].domain == 8){
-            curve2->setBrush(cc[1]);
-//            mesh->at(i)->setBrush(cc[1]);
-        }
-        else if(mp_TriEle[i].domain == 1 | mp_TriEle[i].domain == 7 | mp_TriEle[i].domain == 9){
-            curve2->setBrush(cc[2]);
-//            mesh->at(i)->setBrush(cc[2]);
-        }
-        else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
-            curve2->setBrush(cc[3]);
-//            mesh->at(i)->setBrush(cc[3]);
-        }
-        curve2->setData(x1,y1);
+
+//边界绘制
+//    qDebug() << m_num_EdgEle;
+    for(int i = 0; i < m_num_EdgEle; i++){
+         QCPGraph *graph1 = customplot1->addGraph(); //graph1负责边界单元绘制
+         QVector <double> x1(2);
+         QVector <double> y1(2);
+         for(int j = 0; j < 2; j++){
+             x1[j] = mp_2DNode[mp_EdgEle[i].n[j]].x;
+             y1[j] = mp_2DNode[mp_EdgEle[i].n[j]].y;
+         }
+         QPen graph1pen;
+         if(mp_EdgEle[i].bdr == 0){
+             graph1pen.setColor(Qt::white);
+         }
+         else graph1pen.setColor(Qt::black);
+         graph1pen.setWidthF(3);
+         graph1->setPen(graph1pen);
+         graph1->setData(x1,y1);
     }
+
+
+
     customplot1->replot();
-
-
-    //负载域绘制
-
 
     return 0;
 }

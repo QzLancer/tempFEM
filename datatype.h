@@ -37,6 +37,7 @@ struct CTriElement{
     double ravg{0};//轴对称模型时，单元的平均半径
     double source{0};
     bool LinearFlag{0};//定义逻辑变量LinearFlag，用来判断具体单元是否处于线性区域
+    int Material{0};
 };
 
 enum Demo{
