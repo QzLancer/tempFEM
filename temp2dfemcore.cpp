@@ -204,7 +204,7 @@ int CTemp2DFEMCore::preCalculation()
         mp_TriEle[i].r[0] = mp_TriEle[i].x[2]-mp_TriEle[i].x[1];
         mp_TriEle[i].r[1] = mp_TriEle[i].x[0]-mp_TriEle[i].x[2];
         mp_TriEle[i].r[2] = mp_TriEle[i].x[1]-mp_TriEle[i].x[0];
-        mp_TriEle[i].Area = (mp_TriEle[i].q[0]*mp_TriEle[i].r[1]-mp_TriEle[i].q[1]*mp_TriEle[i].r[0])/2;
+        mp_TriEle[i].Area = abs(mp_TriEle[i].q[0]*mp_TriEle[i].r[1]-mp_TriEle[i].q[1]*mp_TriEle[i].r[0])/2.;
         mp_TriEle[i].xavg = (mp_TriEle[i].x[0]+mp_TriEle[i].x[1]+mp_TriEle[i].x[2])/3;
     }
     //计算所有线单元的长度d，平均半径xavg(轴对称模型使用)
@@ -288,7 +288,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
 //                qDebug() << "Domain3: " << i;
             }
             else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
-                mp_TriEle->cond = 0.26;
+                mp_TriEle[i].cond = 0.26;
                 mp_TriEle[i].Material = 3;
 //                qDebug() << "Domain4: " << i;
             }   //实际上这里应该是空气，暂时用尼龙的热导率代替
@@ -347,6 +347,9 @@ int CTemp2DFEMCore::StaticAxisAssemble()
             F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + Fe;
         }
     }
+    qDebug() << rank(S)<<S.size();
+
+
 
     //线单元装配过程
     for(int k = 0; k < m_num_EdgEle; k++){
@@ -380,10 +383,21 @@ int CTemp2DFEMCore::StaticAxisAssemble()
     X = new sp_mat(true, locs, vals, m_num_pts, m_num_pts, true, true);
 
     double aaa = 0.12134234234535345;
-    mycoutS << S;
-    qDebug()<< F(2)<<aaa;
-    mycoutFl << Fl << endl;
+//    mycoutS << S;
+//    qDebug()<< F(2)<<aaa;
 
+//     printf("%.10lf",S(10,10));
+//    mycoutFl << Fl << endl;
+//    qDebug() << rank(S);
+//    FILE* fp;
+//    fopen_s(&fp, "D:\\tempFEM\\tempFEM0\\tempFEM\\S.txt", "w");;
+//    for(int i=0;i < m_num_pts;++i){
+//        for(int j=0;j < m_num_pts;++j){
+//            fprintf_s(fp,"%.10lf\t",S(i,j));
+//        }
+//        fprintf_s(fp,"\n");
+//    }
+//    fclose(fp);
     return 0;
 }
 
