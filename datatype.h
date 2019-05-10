@@ -4,7 +4,7 @@
 struct C2DNode{
     double x{0}, y{0};//the co
     double V{0};//the solution
-    int bdr{0};//boundary type，根据COMSOL中的设置来定义 1为强迫边界条件，0无影响
+    int bdr{0};//boundary type，根据COMSOL中的设置来定义 0无影响，1为强迫边界条件，用于求解，2和3分别为第二类边界条件和第三类边界条件，用于区域分解
 };
 
 struct CVtxElement{
@@ -40,10 +40,26 @@ struct CTriElement{
     int Material{0};
 };
 
+struct CInterfacePoint{
+    double Y0{0};   //传输线导纳
+    double Vi{0};   //入射电压或者反射电压
+};
+
+class ResistMarix{
+public:
+    double Y11;
+    double Y12;
+    double Y13;
+    double Y22;
+    double Y23;
+    double Y33;
+};
+
 enum Demo{
-    SOLVESIMPLE,
-    SOLVECONTACTOR,
-    METISTEST,
-    BDRTEST //查看负载和边界区域是否正确
+    SOLVESIMPLE,    //直接法求解简单模型
+    SOLVECONTACTOR, //直接法求解接触器模型
+    METISTEST,  //区域分解API测试
+    BDRTEST, //查看负载和边界区域是否正确
+    DDTLM   //DDTLM求解
 };
 #endif // DATATYPE_H

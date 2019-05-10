@@ -118,47 +118,14 @@ void MPPrintInfo(params_t *params, mesh_t *mesh)
       params->ufactor = PMETIS_DEFAULT_UFACTOR;
   }
 
-  printf("******************************************************************************\n");
-  printf("%s", METISTITLE);
-//  printf(" (HEAD: %s, Built on: %s, %s)\n", SVNINFO, __DATE__, __TIME__);
-  printf(" size of idx_t: %zubits, real_t: %zubits, idx_t *: %zubits\n", 
-      8*sizeof(idx_t), 8*sizeof(real_t), 8*sizeof(idx_t *));
-  printf("\n");
-  printf("Mesh Information ------------------------------------------------------------\n");
-  printf(" Name: %s, #Elements: %"PRIDX", #Nodes: %"PRIDX", #Parts: %"PRIDX"\n", 
-      params->filename, mesh->ne, mesh->nn, params->nparts);
-  if (mesh->ncon > 1)
-    printf("  Balancing Constraints: %"PRIDX"\n", mesh->ncon);
-
-  printf("\n");
-  printf("Options ---------------------------------------------------------------------\n");
-  printf(" ptype=%s, objtype=%s, ctype=%s, rtype=%s, iptype=%s\n",
-      ptypenames[params->ptype], objtypenames[params->objtype], ctypenames[params->ctype], 
-      rtypenames[params->rtype], iptypenames[params->iptype]);
-
-  printf(" dbglvl=%"PRIDX", ufactor=%.3f, minconn=%s, contig=%s, nooutput=%s\n",
-      params->dbglvl,
-      I2RUBFACTOR(params->ufactor),
-      (params->minconn  ? "YES" : "NO"), 
-      (params->contig   ? "YES" : "NO"),
-      (params->nooutput ? "YES" : "NO")
-      );
-
-  printf(" seed=%"PRIDX", niter=%"PRIDX", ncuts=%"PRIDX"\n", 
-      params->seed, params->niter, params->ncuts);
-
-  printf(" gtype=%s, ncommon=%"PRIDX", niter=%"PRIDX", ncuts=%"PRIDX"\n", 
-      gtypenames[params->gtype], params->ncommon, params->niter, params->ncuts);
-
-  printf("\n");
-  switch (params->ptype) {
-    case METIS_PTYPE_RB:
-      printf("Recursive Partitioning ------------------------------------------------------\n");
-      break;
-    case METIS_PTYPE_KWAY:
-      printf("Direct k-way Partitioning ---------------------------------------------------\n");
-      break;
-  }
+//  switch (params->ptype) {
+//    case METIS_PTYPE_RB:
+//      printf("Recursive Partitioning ------------------------------------------------------\n");
+//      break;
+//    case METIS_PTYPE_KWAY:
+//      printf("Direct k-way Partitioning ---------------------------------------------------\n");
+//      break;
+//  }
 }
 
 
@@ -173,18 +140,8 @@ void MPReportResults(params_t *params, mesh_t *mesh, idx_t *epart, idx_t *npart,
 
   /* ComputePartitionInfo(params, graph, part); */
 
-  printf(" - %s: %"PRIDX".\n\n", 
-      (params->objtype == METIS_OBJTYPE_CUT ? "Edgecut" : "Volume"), objval);
 
   gk_stopcputimer(params->reporttimer);
 
-
-  printf("\nTiming Information ----------------------------------------------------------\n");
-  printf("  I/O:          \t\t %7.3"PRREAL" sec\n", gk_getcputimer(params->iotimer));
-  printf("  Partitioning: \t\t %7.3"PRREAL" sec   (METIS time)\n", gk_getcputimer(params->parttimer));
-  printf("  Reporting:    \t\t %7.3"PRREAL" sec\n", gk_getcputimer(params->reporttimer));
-  printf("\nMemory Information ----------------------------------------------------------\n");
-  printf("  Max memory used:\t\t %7.3"PRREAL" MB\n", (real_t)(params->maxmemory/(1024.0*1024.0)));
-  printf("******************************************************************************\n");
 
 }

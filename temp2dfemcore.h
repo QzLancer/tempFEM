@@ -24,6 +24,7 @@ public:
     int PostProcessing();
     int GenerateMetisMesh(int partition);
     int drawBDR();  //绘制边界
+    int DDTLMSolve();   //通过DDTLM求解
 
 private:
     int m_num_pts;
@@ -43,7 +44,8 @@ private:
     QList<QCPCurve*> *mesh1;
     const char *meshfile;
     char metismesh[256];
-    int *epartTable;    //保存单元在第几个分区
+    int m_num_part{0};  //分区个数
+    int *epartTable;    //保存三角形单元在第几个分区
     int *npartTable;    //保存节点在第几个分区
     sp_mat* X;
 };

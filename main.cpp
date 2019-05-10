@@ -6,11 +6,12 @@ void solvesimple(Widget *parent);
 void solvecontactor(Widget *parent);
 void metistest(Widget *parent, int part);
 void bdrtest(Widget *parent);
+void ddtlm(Widget *parent, int part);
 
 int main(int argc, char *argv[])
 {
 
-    Demo showWhat = SOLVECONTACTOR;
+    Demo showWhat = DDTLM;
     QApplication a(argc, argv);
     Widget w;
     w.show();
@@ -27,7 +28,8 @@ int main(int argc, char *argv[])
         case BDRTEST:
             bdrtest(&w);
         break;
-
+        case DDTLM:
+            ddtlm(&w, 4);
 
     }
 
@@ -51,7 +53,7 @@ void solvecontactor(Widget *parent){
     temp->preCalculation();
     temp->setCondition(SOLVECONTACTOR);
     temp->StaticAxisAssemble();
-    temp->DirectSolve();
+    temp->DirectSolve1();
 }
 
 void metistest(Widget *parent, int part){
@@ -71,4 +73,13 @@ void bdrtest(Widget *parent){
     temp->setCondition(SOLVECONTACTOR);
     temp->drawBDR();
 //    temp->drawLoad();
+}
+
+void ddtlm(Widget *parent, int part){
+    CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
+    temp->Load2DMeshCOMSOL();
+    temp->preCalculation();
+    temp->setCondition(SOLVECONTACTOR);
+    temp->GenerateMetisMesh(part);
+    temp->DDTLMSolve();
 }
