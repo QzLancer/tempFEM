@@ -27,6 +27,7 @@ public:
     int DDTLMSolve();   //通过DDTLM求解
 
 private:
+    QVector<double> SparseSolve(umat &loc, vec &val, vec F1, int size);
     int m_num_pts;
     int m_num_VtxEle;
     int m_num_EdgEle;

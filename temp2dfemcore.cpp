@@ -794,35 +794,25 @@ int CTemp2DFEMCore::DDTLMSolve()
         }
     }
     qDebug()<<"interface points size: "<<interfacePoints.size();
-
-    //3.定义传输线
-    CInterfacePoint ** tl= (CInterfacePoint**) malloc(m_num_part * sizeof(CInterfacePoint*));
-    for(int i = 0;i < m_num_part;++i){
-        tl[i] = (CInterfacePoint *)malloc(interfacePoints.size() * sizeof(CInterfacePoint));
-        for(int j = 0;j < interfacePoints.size();++j){
-            //tl[i][j].Vi = pmeshnode[interfacePoints.at(j)].A;
-           // fscanf(fp,"%lf \n",&(tl[i][j].Vi));
-            tl[i][j].Vi = 0;//tl[i][j].Vi;//pmeshnode[interfacePoints.at(j)].A -
-            tl[i][j].Y0 = 1e5;
-        }
-        //输出每个分区单元数目
-        qDebug()<<"Number of TriElements in partition "<<i<<" is "<<TriEle_num_part[i];
+    std::ofstream myinter("D:\\tempFEM\\tempFEM0\\tempFEM\\test\\interfacePoints.txt");
+    for(int i = 0; i < interfacePoints.size(); i++){
+        myinter << interfacePoints.at(i) << endl;
     }
-    //4.交界点上的电压
+    //3.交界点上的电压
     double *inter_voltage = (double *)calloc(interfacePoints.size(), sizeof(double));
     for(int i = 0;i < interfacePoints.size();++i){
         inter_voltage[i] = mp_2DNode[interfacePoints.at(i)].V;
     }
-    //5.第i个节点数组对应第i个分区，保存节点k在分区内的编号
+    //4.第i个节点数组对应第i个分区，保存节点k在分区内的编号
     for(int i = 0;i < m_num_TriEle;++i){
         int k = mp_TriEle[i].n[0];
         int m = mp_TriEle[i].n[1];
         int n = mp_TriEle[i].n[2];
-        npart[epartTable[i]][k] = 1000;
-        npart[epartTable[i]][m] = 1000;
-        npart[epartTable[i]][n] = 1000;
+        npart[epartTable[i]][k] = IFPOINT;
+        npart[epartTable[i]][m] = IFPOINT;
+        npart[epartTable[i]][n] = IFPOINT;
     }
-    //6.线单元归入到各自的区域中，全局到局部检索
+    //5.线单元归入到各自的区域中，全局到局部检索
     int * EdgEle_num_part = (int*)calloc(m_num_part, sizeof(int));
     int **Edgpart = (int**)malloc(m_num_part * sizeof(int*));
     for(int i = 0; i < m_num_part; ++i){
@@ -833,19 +823,19 @@ int CTemp2DFEMCore::DDTLMSolve()
             int n1 = mp_EdgEle[j].n[1];
             int Node1Part = npart[i][n0];
             int Node2Part = npart[i][n1];
-            if((Node1Part == 1000) & (Node2Part == 1000)){
+            if((Node1Part == IFPOINT) & (Node2Part == IFPOINT)){
                 Edgpart[i][j] = order++;
                 ++EdgEle_num_part[i];
             }   else Edgpart[i][j] = 0;
         }
         qDebug() << "Number of EdgElements in partition "<<i<<" is "<<EdgEle_num_part[i];
     }
-    //7.分区内节点重新编号，全局到局部检索
+    //6.分区内节点重新编号，全局到局部检索
     int * freenodepart = (int*)malloc(m_num_part * sizeof(int));
     for(int i = 0;i < m_num_part;++i){
         int order = 0;
         for(int j = 0;j < m_num_pts;++j){
-            if(npart[i][j] == 1000){
+            if(npart[i][j] == IFPOINT){
                 npart[i][j] = order++;
             }
         }
@@ -860,7 +850,7 @@ int CTemp2DFEMCore::DDTLMSolve()
 //        }
 //        mycoutnpart << endl;
 //    }
-    //8.仿照epartTable构造lpartTable，这里只包含第三类边界条件
+    //7.仿照epartTable构造lpartTable，这里只包含第三类边界条件
     int *lpartTable = (int*)malloc(m_num_EdgEle*sizeof(int));
     QVector<int> numbdr(4);
     for(int i = 0; i < m_num_EdgEle; i++){
@@ -877,7 +867,31 @@ int CTemp2DFEMCore::DDTLMSolve()
         else lpartTable[i] = -1;
 //        qDebug() << "lpartTable" << i << " = " << lpartTable[i];
     }
-
+    //8.求解partinterfacepoints，每个单元包含的交界点数目
+    QVector <int>partinterfacepoints(4);
+    for(int i = 0; i < m_num_pts; i++){
+        if(npartTable[i] == IFPOINT){
+            for(int j = 0; j < m_num_part; j++){
+                if(npart[j][i] != -1){
+                    ++partinterfacepoints[j];
+                }
+            }
+        }
+    }
+    //9.定义传输线，初始化定义入射过程中节点的电压
+    CInterfacePoint ** tl= (CInterfacePoint**) malloc(m_num_part * sizeof(CInterfacePoint*));
+    for(int i = 0;i < m_num_part;++i){
+        tl[i] = (CInterfacePoint *)malloc(interfacePoints.size() * sizeof(CInterfacePoint));
+        for(int j = 0;j < interfacePoints.size();++j){
+            //tl[i][j].Vi = pmeshnode[interfacePoints.at(j)].A;
+           // fscanf(fp,"%lf \n",&(tl[i][j].Vi));
+            tl[i][j].Vi = 0;//tl[i][j].Vi;//pmeshnode[interfacePoints.at(j)].A -
+            tl[i][j].Y0 = 1;
+        }
+        //输出每个分区单元数目
+        qDebug()<<"Number of TriElements in partition "<<i<<" is "<<TriEle_num_part[i];
+    }
+//    qDebug() << "partinterfacepoints 0" << " = " << partinterfacepoints[0];
     //PART II:DDTLM迭代
     const int MAX_ITER = 200;
     omp_set_num_threads(m_num_part);
@@ -885,18 +899,20 @@ int CTemp2DFEMCore::DDTLMSolve()
     QVector <mat>vals;
     QVector <int>pos(m_num_part);
     QVector <vec>F;
+    QVector <vec>V;
 
     //构造稀疏矩阵
     for(int part = 0;part < m_num_part;++part){
-        umat loc(2, 9*TriEle_num_part[part]+4*numbdr[part]);
+        umat loc(2, 9*TriEle_num_part[part]+4*numbdr[part]+interfacePoints.size());
         locs.push_back(loc);
-        mat val(1, 9*TriEle_num_part[part]+4*numbdr[part]);
+        mat val(1, 9*TriEle_num_part[part]+4*numbdr[part]+interfacePoints.size());
         vals.push_back(val);
         vec F1 = zeros<vec>(freenodepart[part]);
         F.push_back(F1);
+        vec V1 = zeros<vec>(freenodepart[part]);
         pos[part] = 0;
     }
-    //每个单元单独求解，装配到自己的part中
+    //单元装配到自己的part中
     //三角形单元装配
     const double PI = 3.1415926535;
     double Se, Fe, Sl, Fl;
@@ -929,15 +945,120 @@ int CTemp2DFEMCore::DDTLMSolve()
                     else{
                         Sl = PI*mp_EdgEle[k].h*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg)/6;
                     }
-//                    locs[lPart](0,pos[lPart]) = npart[lPart][mp_EdgEle[k].n[i]];
-//                    locs[lPart](1,pos[lPart]) = npart[lPart][mp_EdgEle[k].n[j]];
-//                    vals[lPart](0,pos[lPart]) = Sl;
-//                    ++pos[lPart];
+                    locs[lPart](0,pos[lPart]) = npart[lPart][mp_EdgEle[k].n[i]];
+                    locs[lPart](1,pos[lPart]) = npart[lPart][mp_EdgEle[k].n[j]];
+                    vals[lPart](0,pos[lPart]) = Sl;
+                    ++pos[lPart];
                 }
                 Fl = PI*mp_EdgEle[k].h*mp_EdgEle[k].Text*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg+mp_EdgEle[k].x[i])/3;
                 F[lPart](npart[lPart][mp_EdgEle[k].n[i]]) = F[lPart](npart[lPart][mp_EdgEle[k].n[i]]) + Fl;
             }
         }
     }
-    return 0;
+    for(int i = 0; i < 4; i++){
+        qDebug() << "pos" << i << " = " << pos[i];
+        qDebug() << "locs" << i << "size = " << 9*TriEle_num_part[i]+4*numbdr[i];
+        qDebug() << interfacePoints.size();
+    }
+    //求解过程
+    int time = 0;
+//    while(time < MAX_ITER){
+        for(int part = 0; part < m_num_part; ++part){
+            //入射过程求解，每个部分装配上交界点，然后解算
+            //叠加每个part的右侧列向量和系数矩阵
+            //这部分有问题，迭代以后，原来的locs和vals被覆盖，会报错
+            for(int i = 0; i < interfacePoints.size(); i++){
+                if(npart[part][interfacePoints.at(i)] != -1){
+                    int n = npart[part][interfacePoints.at(i)];
+//                    qDebug() << "interfacePoints.at(i) = " << interfacePoints.at(i);
+//                    qDebug() <<"n = " << n;
+                    double current = 2*tl[part][i].Vi*tl[part][i].Y0;
+                    locs[part](0,pos[part]) = n;
+                    locs[part](1,pos[part]) = n;
+                    vals[part](0,pos[part]) = tl[part][i].Y0;
+                    F[part](i) = current;
+//                    qDebug() << "part = " << part;
+//                    qDebug() << "i = " << i;
+                }
+                else{
+                    locs[part](0,pos[part]) = 0;
+                    locs[part](1,pos[part]) = 0;
+                    vals[part](0,pos[part]) = 0;
+                }
+                ++pos[part];
+            }
+            //求解过程
+            SparseSolve(locs[part], vals[part], F[part], freenodepart[part]);
+        }
+//    }
+
+        return 0;
+}
+
+QVector<double> CTemp2DFEMCore::SparseSolve(umat &loc, vec &val, vec F1, int size)
+{
+    sp_mat X1(true, loc, val, size, size, true, true);
+    SuperMatrix sluA;
+    NCformat *Astore;
+    double   *a;
+    int      *asub, *xa;
+    int      *perm_c; /* column permutation vector */
+    int      *perm_r; /* row permutations from partial pivoting */
+    SuperMatrix L;      /* factor L */
+    SuperMatrix U;      /* factor U */
+    SuperMatrix B;
+    int      nrhs, ldx, info, m, n, nnz;
+    double   *rhs;
+    mem_usage_t   mem_usage;
+    superlu_options_t options;
+    SuperLUStat_t stat;
+
+    set_default_options(&options);
+
+    /* create matrix A in Harwell-Boeing format.*/
+    m = size; n = size; nnz = X1.n_nonzero;
+    a = const_cast<double *>(X1.values);
+    asub = (int*)const_cast<unsigned int*>(X1.row_indices);
+    xa = (int*)const_cast<unsigned int*>(X1.col_ptrs);
+    dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
+    Astore = (NCformat *)sluA.Store;
+    printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
+
+    nrhs = 1;
+    if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
+    //将内存拷贝过来
+    //memmove(rhs, unknown_b, 5*sizeof(double));
+    for (int i = 0; i < m; i++){
+        rhs[i] = F1(i);
+    }
+    dCreate_Dense_Matrix(&B, m, nrhs, rhs, m, SLU_DN, SLU_D, SLU_GE);
+
+    if (!(perm_c = intMalloc(n))) ABORT("Malloc fails for perm_c[].");
+    if (!(perm_r = intMalloc(m))) ABORT("Malloc fails for perm_r[].");
+
+    /* Initialize the statistics variables. */
+    StatInit(&stat);
+    QVector<double> V;
+    dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
+    if (info == 0) {
+        qDebug()<<"Ok.";
+        /* This is how you could access the solution matrix. */
+        double *sol = (double*)((DNformat*)B.Store)->nzval;
+        for(int i = 0; i < size; ++i){
+            V.push_back(sol[i]);
+//            qDebug() << mp_2DNode[i].V;
+        }
+    }else {
+        qDebug() << "info = " << info;
+    }
+
+    SUPERLU_FREE(rhs);
+//    SUPERLU_FREE(xact);
+    SUPERLU_FREE(perm_r);
+    SUPERLU_FREE(perm_c);
+//    Destroy_CompCol_Matrix(&A);
+    Destroy_SuperMatrix_Store(&B);
+    Destroy_SuperNode_Matrix(&L);
+    Destroy_CompCol_Matrix(&U);
+    return V;
 }
