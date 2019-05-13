@@ -290,7 +290,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
 //                qDebug() << "Domain3: " << i;
             }
             else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
-                mp_TriEle[i].cond = 0.26;
+                mp_TriEle[i].cond = 0.03;
                 mp_TriEle[i].Material = 3;
 //                qDebug() << "Domain4: " << i;
             }   //实际上这里应该是空气，暂时用尼龙的热导率代替
@@ -852,7 +852,7 @@ int CTemp2DFEMCore::DDTLMSolve()
 //    }
     //7.仿照epartTable构造lpartTable，这里只包含第三类边界条件
     int *lpartTable = (int*)malloc(m_num_EdgEle*sizeof(int));
-    QVector<int> numbdr(4);
+    QVector<int> numbdr(m_num_part);
     for(int i = 0; i < m_num_EdgEle; i++){
         if(mp_EdgEle[i].bdr == 3){
             for(int j = 0; j < m_num_part; j++){
@@ -877,7 +877,7 @@ int CTemp2DFEMCore::DDTLMSolve()
             //tl[i][j].Vi = pmeshnode[interfacePoints.at(j)].A;
            // fscanf(fp,"%lf \n",&(tl[i][j].Vi));
             tl[i][j].Vi = 0;//tl[i][j].Vi;//pmeshnode[interfacePoints.at(j)].A -
-            tl[i][j].Y0 = 0.01;
+            tl[i][j].Y0 = 0.05;
         }
         //输出每个分区单元数目
         qDebug()<<"Number of TriElements in partition "<<i<<" is "<<TriEle_num_part[i];
@@ -893,6 +893,7 @@ int CTemp2DFEMCore::DDTLMSolve()
     QVector <int>pos(m_num_part);
     QVector <vec>F;
     QVector <vec>Va;
+    QVector <vec>Va_old;
     QVector <mat>partS;
 
     //构造稀疏矩阵
@@ -905,6 +906,7 @@ int CTemp2DFEMCore::DDTLMSolve()
         F.push_back(F1);
         vec V1 = zeros<vec>(freenodepart[part]);
         Va.push_back(V1);
+        Va_old.push_back(V1);
         pos[part] = 0;
         mat partS1 = zeros<mat>(freenodepart[part],freenodepart[part]);
         partS.push_back(partS1);
@@ -957,16 +959,16 @@ int CTemp2DFEMCore::DDTLMSolve()
     }
     //查看每个单元的系数矩阵
     std::ofstream mypartS("../tempFEM/test/partS.txt", ios::ate);
-    for(int part = 0; part < 4; ++part){
+    for(int part = 0; part < m_num_part; ++part){
         mypartS << partS[part] << endl << endl;
     }
 
     std::ofstream mypartF("../tempFEM/test/partF.txt", ios::ate);
-    for(int part = 0; part < 4; ++part){
+    for(int part = 0; part < m_num_part; ++part){
         mypartF << F[part] << endl << endl;
     }
 
-    for(int i = 0; i < 4; i++){
+    for(int i = 0; i < m_num_part; i++){
         qDebug() << "pos" << i << " = " << pos[i];
 //        qDebug() << "locs" << i << "size = " << 9*TriEle_num_part[i]+4*numbdr[i];
     }
@@ -1080,13 +1082,47 @@ int CTemp2DFEMCore::DDTLMSolve()
             }
             inter_voltage[i] = I / Y;
         }
-
-    //输出当前的Va
+        //判断误差
+        double outter_error = 1;
+        double a = 0, b = 0;
+        for(int i = 0; i < m_num_part; ++i){
+            for(int j = 0; j < freenodepart[i]; ++j){
+                a += (Va_old[i][j] - Va[i][j])*(Va_old[i][j] - Va[i][j]);
+                b += Va[i][j] * Va[i][j];
+            }
+        }
+        outter_error = sqrt(a) / sqrt(b);
+        qDebug() << "outter_error = " << outter_error;
+        if(outter_error < Precision){
+            break;
+        }
+        else{
+            for(int i = 0; i < m_num_part; ++i){
+                for(int j = 0; j < freenodepart[i]; ++j){
+                    Va_old[i][j] = Va[i][j];
+                }
+            }
+        }
     }
-
+    //输出当前的Va
     std::ofstream mypartV("../tempFEM/test/partV.txt", ios::ate);
-    for(int part = 0; part < 4; ++part){
+    for(int part = 0; part < m_num_part; ++part){
         mypartV << Va[part] << endl << endl;
     }
-        return 0;
+    //整合结果
+    std::ofstream mytemp("../tempFEM/test/temp.txt");
+    double temp[751];
+    for(int part = 0; part < m_num_part; part++){
+        for(int i = 0; i < m_num_pts; i++){
+            int n = npart[part][i];
+            if(n != -1){
+                temp[i] = Va[part][n];
+            }
+        }
+    }
+    for(int i = 0; i < m_num_pts; i++){
+        mytemp << temp[i] << endl;
+    }
+
+    return 0;
 }

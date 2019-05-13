@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
             bdrtest(&w);
         break;
         case DDTLM:
-            ddtlm(&w, 4);
+            ddtlm(&w, 8);
 
     }
 

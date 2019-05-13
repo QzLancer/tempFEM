@@ -49,6 +49,7 @@ private:
     int *epartTable;    //保存三角形单元在第几个分区
     int *npartTable;    //保存节点在第几个分区
     sp_mat* X;
+    double Precision{1e-3};
 };
 
 #endif // TEMP2DFEMCORE_H
