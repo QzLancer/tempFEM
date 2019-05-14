@@ -384,7 +384,6 @@ int CTemp2DFEMCore::StaticAxisAssemble()
 //    cout << vals;
     X = new sp_mat(true, locs, vals, m_num_pts, m_num_pts, true, true);
 
-    double aaa = 0.12134234234535345;
 //    mycoutS << S;
 //    qDebug()<< F(2)<<aaa;
 
@@ -899,11 +898,11 @@ int CTemp2DFEMCore::DDTLMSolve()
     //构造稀疏矩阵
     for(int part = 0;part < m_num_part;++part){
         umat loc(2, 9*TriEle_num_part[part]+4*numbdr[part]+interfacePoints.size());
-        locs.push_back(loc);
+        locs.push_back(std::move(loc));
         mat val(1, 9*TriEle_num_part[part]+4*numbdr[part]+interfacePoints.size());
-        vals.push_back(val);
+        vals.push_back(std::move(val));
         vec F1 = zeros<vec>(freenodepart[part]);
-        F.push_back(F1);
+        F.push_back(std::move(F1));
         vec V1 = zeros<vec>(freenodepart[part]);
         Va.push_back(V1);
         Va_old.push_back(V1);

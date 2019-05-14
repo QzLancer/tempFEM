@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
         break;
         case DDTLM:
             ddtlm(&w, 8);
+        break;
         case SOLVE3DCONTACTOR:
             solve3dcontactor(&w);
         break;
@@ -89,7 +90,9 @@ void ddtlm(Widget *parent, int part){
 }
 
 void solve3dcontactor(Widget *parent){
-    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D.mphtxt");
+    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D1.mphtxt");
     temp->Load3DFEMCOMSOL();
     temp->preCalculation();
+    temp->setCondition();
+    temp->Static3DAssemble();
 }

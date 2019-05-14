@@ -64,7 +64,7 @@ struct CTetElement{
     double r[4]{0};
     double s[4]{0};
     double cond{0};
-    double Area{0};
+    double Volume{0};
     double source{0};
     bool LinerFlag{0};
     int Material{0};

@@ -3,6 +3,14 @@
 #include <string>
 #include "widget.h"
 #include "datatype.h"
+#if !defined(ARMA_32BIT_WORD)
+#define ARMA_32BIT_WORD
+#endif
+#include "armadillo"
+#include "slu_ddefs.h"
+#include <iomanip>
+#include <omp.h>
+
 class CTemp3DFEMCore
 {
 public:
@@ -10,8 +18,8 @@ public:
     ~CTemp3DFEMCore();
     int Load3DFEMCOMSOL();
     int preCalculation();   //计算基本几何参数
-    int setCondition(Demo showWhat); //根据模型的不同设置边界条件和负载情况
-    int StaticAxisAssemble(); //二维轴对称温度场装配
+    int setCondition(); //根据模型的不同设置边界条件和负载情况
+    int Static3DAssemble(); //三维静态温度场装配
     int DirectSolve();  //直接法求解
     int PostProcessing();
     int GenerateMetisMesh(int partition);
