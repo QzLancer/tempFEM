@@ -34,7 +34,7 @@ SOURCES += \
     metis-5.1.0/programs/mpmetis.c \
     metis-5.1.0/programs/cmdline_gpmetis.c \
     metis-5.1.0/programs/io.c \
-    ctemp3dfemcore.cpp
+    temp3dfemcore.cpp
 
 HEADERS += \
         widget.h \
@@ -42,7 +42,7 @@ HEADERS += \
     datatype.h \
     qcustomplot/qcustomplot.h \
     metis-5.1.0/programs/mpmetis.h \
-    ctemp3dfemcore.h
+    temp3dfemcore.h
 #    mainwindow.h
 
 # Default rules for deployment.

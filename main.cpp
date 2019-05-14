@@ -1,17 +1,18 @@
 #include <QApplication>
 #include <QDebug>
 #include "temp2dfemcore.h"
-
+#include "temp3dfemcore.h"
 void solvesimple(Widget *parent);
 void solvecontactor(Widget *parent);
 void metistest(Widget *parent, int part);
 void bdrtest(Widget *parent);
 void ddtlm(Widget *parent, int part);
+void solve3dcontactor(Widget *parent);
 
 int main(int argc, char *argv[])
 {
 
-    Demo showWhat = DDTLM;
+    Demo showWhat = SOLVE3DCONTACTOR;
     QApplication a(argc, argv);
     Widget w;
     w.show();
@@ -30,6 +31,9 @@ int main(int argc, char *argv[])
         break;
         case DDTLM:
             ddtlm(&w, 8);
+        case SOLVE3DCONTACTOR:
+            solve3dcontactor(&w);
+        break;
 
     }
 
@@ -82,4 +86,10 @@ void ddtlm(Widget *parent, int part){
     temp->setCondition(SOLVECONTACTOR);
     temp->GenerateMetisMesh(part);
     temp->DDTLMSolve();
+}
+
+void solve3dcontactor(Widget *parent){
+    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D.mphtxt");
+    temp->Load3DFEMCOMSOL();
+    temp->preCalculation();
 }

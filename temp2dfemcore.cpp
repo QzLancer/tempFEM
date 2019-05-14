@@ -265,7 +265,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
         qDebug() << "setcondition:SOLVEDDTLM.";
         //热源设置
         for(int i = 0; i < m_num_TriEle; i++){
-            if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
+            if((mp_TriEle[i].domain == 10) | (mp_TriEle[i].domain == 11)){
                 mp_TriEle[i].source = 500000;
             }
             else{
@@ -274,22 +274,22 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
         }
         //热导率设置
         for(int i = 0; i < m_num_TriEle; i++){
-            if(mp_TriEle[i].domain == 10 | mp_TriEle[i].domain == 11){
+            if((mp_TriEle[i].domain == 10) | (mp_TriEle[i].domain == 11)){
                 mp_TriEle[i].cond = 400;
                 mp_TriEle[i].Material = 0;
 //                qDebug() << "Domain1: " << i;
             }
-            else if(mp_TriEle[i].domain == 2 | mp_TriEle[i].domain == 3 | mp_TriEle[i].domain == 4 | mp_TriEle[i].domain == 6 | mp_TriEle[i].domain == 8){
+            else if((mp_TriEle[i].domain == 2) | (mp_TriEle[i].domain == 3) | (mp_TriEle[i].domain == 4) | (mp_TriEle[i].domain == 6) | (mp_TriEle[i].domain == 8)){
                 mp_TriEle[i].cond = 76.2;
                 mp_TriEle[i].Material = 1;
 //                qDebug() << "Domain2: " << i;
             }
-            else if(mp_TriEle[i].domain == 1 | mp_TriEle[i].domain == 7 | mp_TriEle[i].domain == 9){
+            else if((mp_TriEle[i].domain == 1) | (mp_TriEle[i].domain == 7) | (mp_TriEle[i].domain == 9)){
                 mp_TriEle[i].cond = 0.26;
                 mp_TriEle[i].Material = 2;
 //                qDebug() << "Domain3: " << i;
             }
-            else if(mp_TriEle[i].domain == 5 | mp_TriEle[i].domain == 12 | mp_TriEle[i].domain == 13){
+            else if((mp_TriEle[i].domain == 5) | (mp_TriEle[i].domain == 12) | (mp_TriEle[i].domain == 13)){
                 mp_TriEle[i].cond = 0.03;
                 mp_TriEle[i].Material = 3;
 //                qDebug() << "Domain4: " << i;
@@ -297,7 +297,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
         }
         //第三类边界条件设置
         for(int i = 0; i< m_num_EdgEle; i++){
-            if(mp_EdgEle[i].domain == 2 | mp_EdgEle[i].domain == 9 | mp_EdgEle[i].domain == 49){
+            if((mp_EdgEle[i].domain == 2) | (mp_EdgEle[i].domain == 9) | (mp_EdgEle[i].domain == 49)){
                 mp_EdgEle[i].bdr = 3;
                 mp_EdgEle[i].h = 20;
                 mp_EdgEle[i].Text = 293.15;
