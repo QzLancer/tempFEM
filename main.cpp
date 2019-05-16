@@ -8,11 +8,12 @@ void metistest(Widget *parent, int part);
 void bdrtest(Widget *parent);
 void ddtlm(Widget *parent, int part);
 void solve3dcontactor(Widget *parent);
+void ddtlm3d(Widget *parent, int part);
 
 int main(int argc, char *argv[])
 {
 
-    Demo showWhat = SOLVE3DCONTACTOR;
+    Demo showWhat = DDTLM3D;
     QApplication a(argc, argv);
     Widget w;
     w.show();
@@ -30,10 +31,13 @@ int main(int argc, char *argv[])
             bdrtest(&w);
         break;
         case DDTLM:
-            ddtlm(&w, 8);
+            ddtlm(&w, 4);
         break;
         case SOLVE3DCONTACTOR:
             solve3dcontactor(&w);
+        break;
+        case DDTLM3D:
+            ddtlm3d(&w, 4);
         break;
 
     }
@@ -95,4 +99,14 @@ void solve3dcontactor(Widget *parent){
     temp->preCalculation();
     temp->setCondition();
     temp->Static3DAssemble();
+}
+
+void ddtlm3d(Widget *parent, int part)
+{
+    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D1.mphtxt");
+    temp->Load3DFEMCOMSOL();
+    temp->GenerateMetisMesh(part);
+    temp->preCalculation();
+    temp->setCondition();
+    temp->DDTLM3DSolve1();
 }

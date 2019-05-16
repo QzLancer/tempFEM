@@ -977,8 +977,8 @@ int CTemp2DFEMCore::DDTLMSolve()
     QVector<vec> F1 = F;
     while(time++ < MAX_ITER ){
         pos = pos1;
+        #pragma omp parallel for
         for(int part = 0; part < m_num_part; ++part){
-#pragma omp parallel for
             //入射过程求解，每个部分装配上交界点，然后解算
             //叠加每个part的右侧列向量和系数矩阵
             for(int i = 0; i < interfacePoints.size(); i++){

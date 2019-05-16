@@ -75,8 +75,7 @@ struct CInterfacePoint{
     double Vi{0};   //入射电压或者反射电压
 };
 
-class ResistMarix{
-public:
+struct CTriResistMarix{
     double Y11;
     double Y12;
     double Y13;
@@ -85,12 +84,26 @@ public:
     double Y33;
 };
 
+struct CTetResisMatrix{
+    double Y11;
+    double Y12;
+    double Y13;
+    double Y14;
+    double Y22;
+    double Y23;
+    double Y24;
+    double Y33;
+    double Y34;
+    double Y44;
+};
+
 enum Demo{
     SOLVESIMPLE,    //直接法求解简单模型
     SOLVECONTACTOR, //直接法求解接触器模型
     METISTEST,  //区域分解API测试
     BDRTEST, //查看负载和边界区域是否正确
     DDTLM,   //DDTLM求解
-    SOLVE3DCONTACTOR    //直接法求解三维接触器模型
+    SOLVE3DCONTACTOR,   //直接法求解三维接触器模型
+    DDTLM3D //DDTLM方法求解三维接触器模型
 };
 #endif // DATATYPE_H
