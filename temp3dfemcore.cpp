@@ -996,13 +996,18 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
         }
     }
     qDebug()<<"interface points size: "<<interfacePoints.size();
+    std::ofstream myinterfacepoint("../tempFEM/test/interfacepoint.txt");
+    for(int i = 0; i < interfacePoints.size(); ++i){
+        myinterfacepoint << interfacePoints.at(i) << endl;
+    }
+    myinterfacepoint.close();
     //3.定义传输线，有一部分是没有用到的
     CInterfacePoint ** tl= (CInterfacePoint**) malloc(m_num_Part * sizeof(CInterfacePoint*));
     for(int i = 0;i < m_num_Part;++i){
         tl[i] = (CInterfacePoint *)malloc(interfacePoints.size() * sizeof(CInterfacePoint));
         for(int j = 0;j < interfacePoints.size();++j){
             tl[i][j].Vi = 0;
-            tl[i][j].Y0 = 1;
+            tl[i][j].Y0 = 0.01;
         }
         //输出每个分区单元数目
         qDebug()<<"Number of tet elements in partition "<<i<<" is "<<num_Tet_part[i];
@@ -1066,7 +1071,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
     }
 
     //PART II:DDTLM迭代
-    const int MAX_ITER = 200;
+    const int MAX_ITER = 500;
     omp_set_num_threads(m_num_Part);
     QVector <umat>locs;
     QVector <mat>vals;
@@ -1326,7 +1331,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
             xa = (int*)const_cast<unsigned int*>(X1.col_ptrs);
             dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
             Astore = (NCformat *)sluA.Store;
-            printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
+//            printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
 
             nrhs = 1;
             if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
@@ -1376,6 +1381,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
                 }
             }
             inter_voltage[i] = I / Y;
+//            qDebug() << "inter_voltage " << i << " = " << inter_voltage[i];
         }
         //判断误差
         double outter_error = 1;

@@ -103,7 +103,7 @@ void solve3dcontactor(Widget *parent){
 
 void ddtlm3d(Widget *parent, int part)
 {
-    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D1.mphtxt");
+    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D.mphtxt");
     temp->Load3DFEMCOMSOL();
     temp->GenerateMetisMesh(part);
     temp->preCalculation();
