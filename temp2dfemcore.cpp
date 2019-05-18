@@ -1247,13 +1247,17 @@ int CTemp2DFEMCore::NRSolve()
                 double Cond = TtoCond(T);
                 double CondPartialT = (TtoCond(T+0.01)-TtoCond(T))/0.01;
                 for(int i = 0; i < 3; i++){
+                    double FJ = 0;
+                    double J1 = CondPartialT*(TriResist[k].C[i][0]*Va(n[0])+TriResist[k].C[i][1]*Va(n[1])+TriResist[k].C[i][2]*Va(n[2]));
                     for(int j = 0; j < 3; j++){
-                        Se = Cond*TriResist[k].C[i][j];
+                        Se = Cond*TriResist[k].C[i][j] + J1;
                         locs(0, pos) = mp_TriEle[k].n[i];
                         locs(1, pos) = mp_TriEle[k].n[j];
                         vals(0, pos) = Se;
                         ++pos;
+                        FJ = FJ+J1*Va(mp_TriEle[k].n[j]);
                     }
+                    F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + FJ;
                 }
             }
         }
