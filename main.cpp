@@ -9,11 +9,11 @@ void bdrtest(Widget *parent);
 void ddtlm(Widget *parent, int part);
 void solve3dcontactor(Widget *parent);
 void ddtlm3d(Widget *parent, int part);
-
+void solvecontactorNR(Widget *parent);
 int main(int argc, char *argv[])
 {
 
-    Demo showWhat = DDTLM3D;
+    Demo showWhat = SOLVECONTACTORNR;
     QApplication a(argc, argv);
     Widget w;
     w.show();
@@ -39,7 +39,9 @@ int main(int argc, char *argv[])
         case DDTLM3D:
             ddtlm3d(&w, 4);
         break;
-
+        case SOLVECONTACTORNR:
+            solvecontactorNR(&w);
+        break;
     }
 
     return a.exec();
@@ -109,4 +111,12 @@ void ddtlm3d(Widget *parent, int part)
     temp->preCalculation();
     temp->setCondition();
     temp->DDTLM3DSolve1();
+}
+
+void solvecontactorNR(Widget *parent){
+    CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
+    temp->Load2DMeshCOMSOL();
+    temp->preCalculation();
+    temp->setCondition(SOLVECONTACTORNR);
+    temp->NRSolve();
 }

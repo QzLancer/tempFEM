@@ -45,7 +45,7 @@ struct CTriElement{
     double Area{0};//单元的面积
     double xavg{0};//轴对称模型时，单元的平均半径
     double source{0};
-    bool LinerFlag{0};//定义逻辑变量LinearFlag，用来判断具体单元是否处于线性区域
+    bool LinearFlag{0};//定义逻辑变量LinearFlag，用来判断具体单元是否处于线性区域
     int Material{0};
     double h{0};
     double Text{0};
@@ -66,7 +66,7 @@ struct CTetElement{
     double cond{0};
     double Volume{0};
     double source{0};
-    bool LinerFlag{0};
+    bool LinearFlag{0};
     int Material{0};
 };
 
@@ -76,12 +76,7 @@ struct CInterfacePoint{
 };
 
 struct CTriResistMarix{
-    double Y11;
-    double Y12;
-    double Y13;
-    double Y22;
-    double Y23;
-    double Y33;
+    double C[3][3];
 };
 
 struct CTetResisMatrix{
@@ -100,10 +95,14 @@ struct CTetResisMatrix{
 enum Demo{
     SOLVESIMPLE,    //直接法求解简单模型
     SOLVECONTACTOR, //直接法求解接触器模型
+    SOLVECONTACTORNR,    //牛顿迭代法求解接触器模型，考虑空气的非线性
     METISTEST,  //区域分解API测试
     BDRTEST, //查看负载和边界区域是否正确
     DDTLM,   //DDTLM求解
+    NRDDTLM, //DDTLM求解非线性
     SOLVE3DCONTACTOR,   //直接法求解三维接触器模型
-    DDTLM3D //DDTLM方法求解三维接触器模型
+    SOLVE3DCONTACTORNR, //NR法求解非线性三维
+    DDTLM3D, //DDTLM方法求解三维接触器模型
+    NRDDTLM3D   //DDTLM方法求解三维非线性接触器模型
 };
 #endif // DATATYPE_H

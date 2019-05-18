@@ -329,22 +329,22 @@ int CTemp3DFEMCore::setCondition()
         if((mp_TetEle[i].domain == 7) | (mp_TetEle[i].domain == 9)){
             mp_TetEle[i].cond = 400;
             mp_TetEle[i].Material = 0;
-            mp_TetEle[i].LinerFlag = 1;
+            mp_TetEle[i].LinearFlag = 1;
         }
         else if((mp_TetEle[i].domain == 2) | (mp_TetEle[i].domain == 4) | (mp_TetEle[i].domain == 10) | (mp_TetEle[i].domain == 12)| (mp_TetEle[i].domain == 13)){
             mp_TetEle[i].cond = 76.2;
             mp_TetEle[i].Material = 1;
-            mp_TetEle[i].LinerFlag = 1;
+            mp_TetEle[i].LinearFlag = 1;
         }
         else if((mp_TetEle[i].domain == 1) | (mp_TetEle[i].domain == 6) | (mp_TetEle[i].domain == 8)){
             mp_TetEle[i].cond = 0.26;
             mp_TetEle[i].Material = 2;
-            mp_TetEle[i].LinerFlag = 1;
+            mp_TetEle[i].LinearFlag = 1;
         }
         else if((mp_TetEle[i].domain == 3) | (mp_TetEle[i].domain == 5) | (mp_TetEle[i].domain == 11)){
             mp_TetEle[i].cond = 0.03;
             mp_TetEle[i].Material = 3;
-            mp_TetEle[i].LinerFlag = 1;
+            mp_TetEle[i].LinearFlag = 1;
         }
     }
     //第三类边界条件设置
@@ -1072,7 +1072,6 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
 
     //PART II:DDTLM迭代
     const int MAX_ITER = 500;
-    omp_set_num_threads(m_num_Part);
     QVector <umat>locs;
     QVector <mat>vals;
     QVector <int>pos(m_num_Part);
@@ -1080,9 +1079,6 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
     QVector <vec>Va;
     QVector <vec>Va_old;
     QVector <mat>partS;
-//    umat locs1 = zeros<umat>(2, 16*m_num_TetEle+9*(numbdr[0]+numbdr[1]+numbdr[2]+numbdr[3]));
-//    mat vals1 = zeros<mat>(1, 16*m_num_TetEle+9*(numbdr[0]+numbdr[1]+numbdr[2]+numbdr[3]));
-//    int pos1 = 0;
     //构造稀疏矩阵
     for(int part = 0;part < m_num_Part;++part){
         umat loc(2, 16*num_Tet_part[part]+9*numbdr[part]+interfacePoints.size());
@@ -1112,10 +1108,6 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
                 vals[tPart](0,pos[tPart]) = St;
                 partS[tPart](npart[tPart][mp_TetEle[k].n[i]], npart[tPart][mp_TetEle[k].n[j]]) = partS[tPart](npart[tPart][mp_TetEle[k].n[i]], npart[tPart][mp_TetEle[k].n[j]]) + St;
                 ++pos[tPart];
-//                locs1(0, pos1) = mp_TetEle[k].n[i];
-//                locs1(1, pos1) = mp_TetEle[k].n[j];
-//                vals1(0, pos1) = St;
-//                ++pos1;
 
             }
             Ft = mp_TetEle[k].source*mp_TetEle[k].Volume/4;
@@ -1140,10 +1132,6 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
                     vals[ePart](0,pos[ePart]) = Se;
                     partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) = partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) + Se;
                     ++pos[ePart];
-//                    locs1(0, pos1) = mp_TriEle[k].n[i];
-//                    locs1(1, pos1) = mp_TriEle[k].n[j];
-//                    vals1(0, pos1) = Se;
-//                    ++pos1;
                 }
                 Fe = mp_TriEle[k].h*mp_TriEle[k].Text*mp_TriEle[k].Area/3;
                 F[ePart](npart[ePart][mp_TriEle[k].n[i]]) = F[ePart](npart[ePart][mp_TriEle[k].n[i]]) + Fe;
@@ -1151,125 +1139,8 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
         }
     }
     qDebug() << "assemble finish";
-    //查看每个part的右侧列向量
-//    std::ofstream mypartF("../tempFEM/test/partF.txt", ios::ate);
-//    for(int i = 0; i < m_num_pts; ++i){
-//        for(int part = 0; part < m_num_Part; ++part){
-//            int n =npart[part][i];
-//            if(n == -1){
-//                mypartF << 0 << " ";
-//            }
-//            else{
-//                mypartF << F[part][n] << " ";
-//            }
-//        }
-//         mypartF << endl;
-//    }
-//    mypartF.close();
-
-//    组合F，与直接法得到的F进行对比
-//    std::ofstream myasmF("../tempFEM/test/asmF.txt", ios::ate);
-//    vec asmF = zeros<vec>(m_num_pts);
-//    for(int part = 0; part < m_num_Part; ++part){
-//        for(int i = 0; i < m_num_pts; ++i){
-//            if(npart[part][i] != -1){
-//                asmF(i) += F[part][npart[part][i]];
-//            }
-//        }
-//    }
-//    myasmF << asmF;
-////    构建节点从part到全局的检索
-//    umat part2global = zeros<umat>(m_num_Part, m_num_pts);
-//    for(int part = 0; part < m_num_Part; ++part){
-//        int j = 0;
-//        for(int i = 0; i < m_num_pts; ++i){
-//            if(npart[part][i] != -1){
-//                part2global(part, j) = i;
-//                ++j;
-//            }
-//        }
-//    }
-//    std::ofstream mypart2global("../tempFEM/test/part2global.txt");
-//    mypart2global << part2global.t();
-////    组合S,通过组合每个part后直接求解来判断S装配的结果是否正确
-//    umat asmlocs = zeros<umat>(2, 16*(m_num_TetEle)+9*(numbdr[0]+numbdr[1]+numbdr[2]+numbdr[3]));
-//    mat asmvals = zeros<mat>(1, 16*(m_num_TetEle)+9*(numbdr[0]+numbdr[1]+numbdr[2]+numbdr[3]));
-//    int asmpos = 0;
-//    for(int part = 0; part < m_num_Part; ++part){
-//        for(int i = 0; i < pos[part]; ++i){
-//            asmlocs(0, asmpos) = part2global(part, locs[part](0,i));
-//            asmlocs(1, asmpos) = part2global(part, locs[part](1,i));
-//            asmvals(0, asmpos) = vals[part](0,i);
-//            ++asmpos;
-//        }
-//    }
-
-////    求解过程
-//    sp_mat X(true, asmlocs, asmvals, m_num_pts, m_num_pts, true, true);
-//    SuperMatrix sluA;
-//    NCformat *Astore;
-//    double   *a;
-//    int      *asub, *xa;
-//    int      *perm_c; /* column permutation vector */
-//    int      *perm_r; /* row permutations from partial pivoting */
-//    SuperMatrix L;      /* factor L */
-//    SuperMatrix U;      /* factor U */
-//    SuperMatrix B;
-//    int      nrhs, ldx, info, m, n, nnz;
-//    double   *rhs;
-//    mem_usage_t   mem_usage;
-//    superlu_options_t options;
-//    SuperLUStat_t stat;
-
-//    set_default_options(&options);
-
-//    /* create matrix A in Harwell-Boeing format.*/
-//    m = m_num_pts; n = m_num_pts; nnz = X.n_nonzero;
-//    a = const_cast<double *>(X.values);
-//    asub = (int*)const_cast<unsigned int*>(X.row_indices);
-//    xa = (int*)const_cast<unsigned int*>(X.col_ptrs);
-//    dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
-//    Astore = (NCformat *)sluA.Store;
-//    printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
-
-//    nrhs = 1;
-//    if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
-//    //将内存拷贝过来
-//    //memmove(rhs, unknown_b, 5*sizeof(double));
-//    for (int i = 0; i < m; i++){
-//        rhs[i] = asmF(i);
-//    }
-//    dCreate_Dense_Matrix(&B, m, nrhs, rhs, m, SLU_DN, SLU_D, SLU_GE);
-
-//    if (!(perm_c = intMalloc(n))) ABORT("Malloc fails for perm_c[].");
-//    if (!(perm_r = intMalloc(m))) ABORT("Malloc fails for perm_r[].");
-
-//    /* Initialize the statistics variables. */
-//    StatInit(&stat);
-//    dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
-//    if (info == 0) {
-////                qDebug()<<"Ok.";
-//        /* This is how you could access the solution matrix. */
-//        double *sol = (double*)((DNformat*)B.Store)->nzval;
-//        for(int i = 0; i < m_num_pts; ++i){
-//           mp_3DNode[i].V = sol[i];
-//           qDebug() << "V " << i << " " << mp_3DNode[i].V;
-//        }
-//    }else {
-//        qDebug() << "info = " << info;
-//    }
-
-//    SUPERLU_FREE(rhs);
-////    SUPERLU_FREE(xact);
-//    SUPERLU_FREE(perm_r);
-//    SUPERLU_FREE(perm_c);
-////    Destroy_CompCol_Matrix(&A);
-//    Destroy_SuperMatrix_Store(&B);
-//    Destroy_SuperNode_Matrix(&L);
-//    Destroy_CompCol_Matrix(&U);
     for(int i = 0; i < m_num_Part; i++){
         qDebug() << "pos" << i << " = " << pos[i];
-//        qDebug() << "locs" << i << "size = " << 9*TriEle_num_part[i]+4*numbdr[i];
     }
 
     //求解过程
@@ -1278,7 +1149,8 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
     QVector<vec> F1 = F;
     while(time++ < MAX_ITER ){
         pos = pos2;
-        #pragma omp parallel for
+        omp_set_num_threads(m_num_Part);
+#pragma omp parallel for
         for(int part = 0; part < m_num_Part; ++part){
             //入射过程求解，每个部分装配上交界点，然后解算
             //叠加每个part的右侧列向量和系数矩阵

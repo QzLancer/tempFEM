@@ -103,7 +103,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL()
     }
     else qDebug() << m_num_VtxEle <<  "number of Vertex elements.";
     fgets(ch, 256, fp);
-//    qDebug() << m_num_VtxEle;
+    //    qDebug() << m_num_VtxEle;
     mp_VtxEle = new CVtxElement[m_num_VtxEle];
     for (int i = 0; i < m_num_VtxEle; i++) {
         if (fscanf_s(fp, "%d \n", &((mp_VtxEle + i)->n)) != 1) {
@@ -151,7 +151,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL()
         }
         else{
             mp_EdgEle[i].domain++;
-//            qDebug() << "mp_EdgEle: " << mp_EdgEle[i].domain;
+            //            qDebug() << "mp_EdgEle: " << mp_EdgEle[i].domain;
         }
     }
     //----------------trinode-----------------------------------
@@ -181,7 +181,7 @@ int CTemp2DFEMCore::Load2DMeshCOMSOL()
             return 1;
         }
         else{
-//            mp_TriEle[i].domain++;
+            //            mp_TriEle[i].domain++;
         }
     }
     fclose(fp);
@@ -220,14 +220,14 @@ int CTemp2DFEMCore::preCalculation()
         mp_EdgEle[i].xavg = (mp_EdgEle[i].x[0]+mp_EdgEle[i].x[1])/2;
     }
 
-   //观察求解的值是否正确
-//    std::cout << "mp_TriEle.Area:" << "\n";
-//    for(int i = 0; i< m_num_TriEle; i++){
-//        for(int j = 0; j < 3; j++){
-//            std::cout << mp_TriEle[i].Area << " ";
-//        }
-//        std::cout << "\n";
-//    }
+    //观察求解的值是否正确
+    //    std::cout << "mp_TriEle.Area:" << "\n";
+    //    for(int i = 0; i< m_num_TriEle; i++){
+    //        for(int j = 0; j < 3; j++){
+    //            std::cout << mp_TriEle[i].Area << " ";
+    //        }
+    //        std::cout << "\n";
+    //    }
     return 0;
 }
 
@@ -254,14 +254,16 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
             }
         }
         //三角形单元参数
-        for (int i = 0; i < m_num_TriEle; i++)
+        for (int i = 0; i < m_num_TriEle; i++){
             mp_TriEle[i].cond = 52;
+            mp_TriEle[i].LinearFlag = 1;
+        }
 
-    //    //调试
-    //    for (int i = 0; i < m_num_pts; i++)
-    //        cout << mp_2DNode[i].bdr << endl;
+        //    //调试
+        //    for (int i = 0; i < m_num_pts; i++)
+        //        cout << mp_2DNode[i].bdr << endl;
     }
-    else if(showWhat == SOLVECONTACTOR){
+    else if((showWhat == SOLVECONTACTOR) | (showWhat == SOLVECONTACTORNR)){
         qDebug() << "setcondition:SOLVEDDTLM.";
         //热源设置
         for(int i = 0; i < m_num_TriEle; i++){
@@ -277,22 +279,26 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
             if((mp_TriEle[i].domain == 10) | (mp_TriEle[i].domain == 11)){
                 mp_TriEle[i].cond = 400;
                 mp_TriEle[i].Material = 0;
-//                qDebug() << "Domain1: " << i;
+                mp_TriEle[i].LinearFlag = 1;
+                //                qDebug() << "Domain1: " << i;
             }
             else if((mp_TriEle[i].domain == 2) | (mp_TriEle[i].domain == 3) | (mp_TriEle[i].domain == 4) | (mp_TriEle[i].domain == 6) | (mp_TriEle[i].domain == 8)){
                 mp_TriEle[i].cond = 76.2;
                 mp_TriEle[i].Material = 1;
-//                qDebug() << "Domain2: " << i;
+                mp_TriEle[i].LinearFlag = 1;
+                //                qDebug() << "Domain2: " << i;
             }
             else if((mp_TriEle[i].domain == 1) | (mp_TriEle[i].domain == 7) | (mp_TriEle[i].domain == 9)){
                 mp_TriEle[i].cond = 0.26;
                 mp_TriEle[i].Material = 2;
-//                qDebug() << "Domain3: " << i;
+                mp_TriEle[i].LinearFlag = 1;
+                //                qDebug() << "Domain3: " << i;
             }
             else if((mp_TriEle[i].domain == 5) | (mp_TriEle[i].domain == 12) | (mp_TriEle[i].domain == 13)){
                 mp_TriEle[i].cond = 0.03;
                 mp_TriEle[i].Material = 3;
-//                qDebug() << "Domain4: " << i;
+                mp_TriEle[i].LinearFlag = 0;
+                //                qDebug() << "Domain4: " << i;
             }   //实际上这里应该是空气，暂时用尼龙的热导率代替
         }
         //第三类边界条件设置
@@ -301,11 +307,12 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
                 mp_EdgEle[i].bdr = 3;
                 mp_EdgEle[i].h = 20;
                 mp_EdgEle[i].Text = 293.15;
-//                qDebug() << i;
+                //                qDebug() << i;
             }
-//            cout << mp_EdgEle[i].bdr << endl;
+            //            cout << mp_EdgEle[i].bdr << endl;
         }
     }
+
     return 0;
 }
 
@@ -329,11 +336,11 @@ int CTemp2DFEMCore::StaticAxisAssemble()
     std::ofstream mycoutxavg("..\\tempFEM\\test\\xavg.txt");
     const double PI = 3.14159265358979323846;
     //三角形单元装配过程
-//    mat Se = zeros<mat>(3,3);
+    //    mat Se = zeros<mat>(3,3);
     double Se;
     double Fe;
     double Sl;
-//    double Fl;
+    //    double Fl;
     vec Fl = zeros<vec>(2);
     for(int k = 0; k < m_num_TriEle; k++){
         for(int i = 0; i < 3; i++){
@@ -364,7 +371,7 @@ int CTemp2DFEMCore::StaticAxisAssemble()
                     else{
                         Sl = PI*mp_EdgEle[k].h*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg)/6.;
                     }
-//                    cout << Sl << endl;
+                    //                    cout << Sl << endl;
                     S(mp_EdgEle[k].n[i], mp_EdgEle[k].n[j]) = S(mp_EdgEle[k].n[i], mp_EdgEle[k].n[j]) + Sl;
                     locs(0, pos) = mp_EdgEle[k].n[i];
                     locs(1, pos) = mp_EdgEle[k].n[j];
@@ -380,25 +387,25 @@ int CTemp2DFEMCore::StaticAxisAssemble()
         }
     }
     qDebug() << "Assemble successful!";
-//    cout << locs;
-//    cout << vals;
+    //    cout << locs;
+    //    cout << vals;
     X = new sp_mat(true, locs, vals, m_num_pts, m_num_pts, true, true);
 
-//    mycoutS << S;
-//    qDebug()<< F(2)<<aaa;
+    //    mycoutS << S;
+    //    qDebug()<< F(2)<<aaa;
 
-//     printf("%.10lf",S(10,10));
-//    mycoutFl << Fl << endl;
-//    qDebug() << rank(S);
-//    FILE* fp;
-//    fopen_s(&fp, "D:\\tempFEM\\tempFEM0\\tempFEM\\S.txt", "w");;
-//    for(int i=0;i < m_num_pts;++i){
-//        for(int j=0;j < m_num_pts;++j){
-//            fprintf_s(fp,"%.10lf\t",S(i,j));
-//        }
-//        fprintf_s(fp,"\n");
-//    }
-//    fclose(fp);
+    //     printf("%.10lf",S(10,10));
+    //    mycoutFl << Fl << endl;
+    //    qDebug() << rank(S);
+    //    FILE* fp;
+    //    fopen_s(&fp, "D:\\tempFEM\\tempFEM0\\tempFEM\\S.txt", "w");;
+    //    for(int i=0;i < m_num_pts;++i){
+    //        for(int j=0;j < m_num_pts;++j){
+    //            fprintf_s(fp,"%.10lf\t",S(i,j));
+    //        }
+    //        fprintf_s(fp,"\n");
+    //    }
+    //    fclose(fp);
     return 0;
 }
 
@@ -503,10 +510,10 @@ int CTemp2DFEMCore::DirectSolve1()
     }
 
     SUPERLU_FREE(rhs);
-//    SUPERLU_FREE(xact);
+    //    SUPERLU_FREE(xact);
     SUPERLU_FREE(perm_r);
     SUPERLU_FREE(perm_c);
-//    Destroy_CompCol_Matrix(&A);
+    //    Destroy_CompCol_Matrix(&A);
     Destroy_SuperMatrix_Store(&B);
     Destroy_SuperNode_Matrix(&L);
     Destroy_CompCol_Matrix(&U);
@@ -516,64 +523,64 @@ int CTemp2DFEMCore::DirectSolve1()
 
 int CTemp2DFEMCore::PostProcessing()
 {
-//    QCustomPlot *customPlot = new QCustomPlot(parent);
-//    QVBoxLayout *layout = new QVBoxLayout(parent);
-//    layout->addWidget(customPlot);
-//    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
-//    customPlot->axisRect()->setupFullAxesBox(true);
-//    customPlot->xAxis->setLabel("x");
-//    customPlot->yAxis->setLabel("y");
-//    customPlot->xAxis->setRange(0.02,0.1);
-//    customPlot->yAxis->setRange(0,0.14);
-//    customPlot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
-//    customPlot->axisRect()->setupFullAxesBox(true);
-//    customPlot->xAxis->setLabel("x");
-//    customPlot->yAxis->setLabel("y");
-//    //二维插值
+    //    QCustomPlot *customPlot = new QCustomPlot(parent);
+    //    QVBoxLayout *layout = new QVBoxLayout(parent);
+    //    layout->addWidget(customPlot);
+    //    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    //    customPlot->axisRect()->setupFullAxesBox(true);
+    //    customPlot->xAxis->setLabel("x");
+    //    customPlot->yAxis->setLabel("y");
+    //    customPlot->xAxis->setRange(0.02,0.1);
+    //    customPlot->yAxis->setRange(0,0.14);
+    //    customPlot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
+    //    customPlot->axisRect()->setupFullAxesBox(true);
+    //    customPlot->xAxis->setLabel("x");
+    //    customPlot->yAxis->setLabel("y");
+    //    //二维插值
 
 
-//    // set up the QCPColorMap:
-//    QCPColorMap *colorMap = new QCPColorMap(customPlot->xAxis, customPlot->yAxis);
-//    int nx = 200;
-//    int ny = 200;
-//    colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-//    colorMap->data()->setRange(QCPRange(-4, 4), QCPRange(-4, 4)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
-//    // now we assign some data, by accessing the QCPColorMapData instance of the color map:
-//    double x, y, z;
-//    for (int xIndex=0; xIndex<nx; ++xIndex)
-//    {
-//      for (int yIndex=0; yIndex<ny; ++yIndex)
-//      {
-//        colorMap->data()->cellToCoord(xIndex, yIndex, &x, &y);
-//        cout << x << " " << y << endl;
-//        double r = 3*qSqrt(x*x+y*y)+1e-2;
-//        z = 2*x*(qCos(r+2)/r-qSin(r+2)/r); // the B field strength of dipole radiation (modulo physical constants)
-//        colorMap->data()->setCell(xIndex, yIndex, z);
-//      }
-//    }
+    //    // set up the QCPColorMap:
+    //    QCPColorMap *colorMap = new QCPColorMap(customPlot->xAxis, customPlot->yAxis);
+    //    int nx = 200;
+    //    int ny = 200;
+    //    colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
+    //    colorMap->data()->setRange(QCPRange(-4, 4), QCPRange(-4, 4)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+    //    // now we assign some data, by accessing the QCPColorMapData instance of the color map:
+    //    double x, y, z;
+    //    for (int xIndex=0; xIndex<nx; ++xIndex)
+    //    {
+    //      for (int yIndex=0; yIndex<ny; ++yIndex)
+    //      {
+    //        colorMap->data()->cellToCoord(xIndex, yIndex, &x, &y);
+    //        cout << x << " " << y << endl;
+    //        double r = 3*qSqrt(x*x+y*y)+1e-2;
+    //        z = 2*x*(qCos(r+2)/r-qSin(r+2)/r); // the B field strength of dipole radiation (modulo physical constants)
+    //        colorMap->data()->setCell(xIndex, yIndex, z);
+    //      }
+    //    }
 
-//    // add a color scale:
-//    QCPColorScale *colorScale = new QCPColorScale(customPlot);
-//    customPlot->plotLayout()->addElement(0, 1, colorScale); // add it to the right of the main axis rect
-//    colorScale->setType(QCPAxis::atRight); // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
-//    colorMap->setColorScale(colorScale); // associate the color map with the color scale
-//    colorScale->axis()->setLabel("Magnetic Field Strength");
+    //    // add a color scale:
+    //    QCPColorScale *colorScale = new QCPColorScale(customPlot);
+    //    customPlot->plotLayout()->addElement(0, 1, colorScale); // add it to the right of the main axis rect
+    //    colorScale->setType(QCPAxis::atRight); // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
+    //    colorMap->setColorScale(colorScale); // associate the color map with the color scale
+    //    colorScale->axis()->setLabel("Magnetic Field Strength");
 
-//    // set the color gradient of the color map to one of the presets:
-//    colorMap->setGradient(QCPColorGradient::gpPolar);
-//    // we could have also created a QCPColorGradient instance and added own colors to
-//    // the gradient, see the documentation of QCPColorGradient for what's possible.
+    //    // set the color gradient of the color map to one of the presets:
+    //    colorMap->setGradient(QCPColorGradient::gpPolar);
+    //    // we could have also created a QCPColorGradient instance and added own colors to
+    //    // the gradient, see the documentation of QCPColorGradient for what's possible.
 
-//    // rescale the data dimension (color) such that all data points lie in the span visualized by the color gradient:
-//    colorMap->rescaleDataRange();
+    //    // rescale the data dimension (color) such that all data points lie in the span visualized by the color gradient:
+    //    colorMap->rescaleDataRange();
 
-//    // make sure the axis rect and color scale synchronize their bottom and top margins (so they line up):
-//    QCPMarginGroup *marginGroup = new QCPMarginGroup(customPlot);
-//    customPlot->axisRect()->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
-//    colorScale->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
+    //    // make sure the axis rect and color scale synchronize their bottom and top margins (so they line up):
+    //    QCPMarginGroup *marginGroup = new QCPMarginGroup(customPlot);
+    //    customPlot->axisRect()->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
+    //    colorScale->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
 
-//    // rescale the key (x) and value (y) axes so the whole color map is visible:
-//    customPlot->rescaleAxes();
+    //    // rescale the key (x) and value (y) axes so the whole color map is visible:
+    //    customPlot->rescaleAxes();
     return 0;
 }
 
@@ -585,24 +592,24 @@ int CTemp2DFEMCore::GenerateMetisMesh(int partition)
     }
     FILE *fp = nullptr;
 
-//    QVBoxLayout *layout = new QVBoxLayout(thePlot);
-//    layout->addWidget(customplot);
-//    customplot->xAxis->setLabel("x");
-//    customplot->xAxis->setRange(0, 0.09);
-//    customplot->xAxis->setAutoTickStep(false);
-//    customplot->xAxis->setTicks(false);
-//    customplot->yAxis->setLabel("y");
-//    customplot->yAxis->setRange(-0.09, 0.09);
-//    customplot->xAxis2->setTicks(false);
+    //    QVBoxLayout *layout = new QVBoxLayout(thePlot);
+    //    layout->addWidget(customplot);
+    //    customplot->xAxis->setLabel("x");
+    //    customplot->xAxis->setRange(0, 0.09);
+    //    customplot->xAxis->setAutoTickStep(false);
+    //    customplot->xAxis->setTicks(false);
+    //    customplot->yAxis->setLabel("y");
+    //    customplot->yAxis->setRange(-0.09, 0.09);
+    //    customplot->xAxis2->setTicks(false);
     customplot->yAxis->setScaleRatio(customplot->xAxis, 1.0);
 
-//    customplot->yAxis->setAutoTickStep(false);
-//    customplot->yAxis->setAutoTickLabels(false);
-//    customplot->yAxis->setTicks(false);
-//    customplot->yAxis->grid()->setVisible(false);
-//    customplot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
-//    customplot->yAxis2->setTicks(false);
-//    customplot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+    //    customplot->yAxis->setAutoTickStep(false);
+    //    customplot->yAxis->setAutoTickLabels(false);
+    //    customplot->yAxis->setTicks(false);
+    //    customplot->yAxis->grid()->setVisible(false);
+    //    customplot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
+    //    customplot->yAxis2->setTicks(false);
+    //    customplot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
     //生成metis的输入分网文件
     strcpy(metismesh,meshfile);
@@ -681,10 +688,10 @@ int CTemp2DFEMCore::GenerateMetisMesh(int partition)
     }
     customplot->replot();
     thePlot->setWindowTitle("区域分解");
-//    qApp->processEvents();//强制刷新界面
-//    for(int i = 0; i < m_num_TriEle; ++i){
-//        qDebug() << epartTable[i];
-//    }
+    //    qApp->processEvents();//强制刷新界面
+    //    for(int i = 0; i < m_num_TriEle; ++i){
+    //        qDebug() << epartTable[i];
+    //    }
     return 0;
 }
 
@@ -707,40 +714,40 @@ int CTemp2DFEMCore::drawBDR()
 
 
     //    不同材质区域绘制
-        for(int i = 0; i < m_num_TriEle; i++){
-            QCPCurve *curve2 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve2负责负载域绘制
-            curve2->setLineStyle(QCPCurve::lsNone );
-            mesh1->push_back(curve2);
-            QVector <double> x1(4);
-            QVector <double> y1(4);
-            for (int j = 0; j < 3; j++) {
-                x1[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
-                y1[j] = mp_2DNode[mp_TriEle[i].n[j]].y;
-            }
-            x1[3] = x1[0];
-            y1[3] = y1[0];
-            curve2->setBrush(cc[mp_TriEle[i].Material]);
-            curve2->setData(x1,y1);
+    for(int i = 0; i < m_num_TriEle; i++){
+        QCPCurve *curve2 = new QCPCurve(customplot1->xAxis, customplot1->yAxis); //curve2负责负载域绘制
+        curve2->setLineStyle(QCPCurve::lsNone );
+        mesh1->push_back(curve2);
+        QVector <double> x1(4);
+        QVector <double> y1(4);
+        for (int j = 0; j < 3; j++) {
+            x1[j] = mp_2DNode[mp_TriEle[i].n[j]].x;
+            y1[j] = mp_2DNode[mp_TriEle[i].n[j]].y;
         }
+        x1[3] = x1[0];
+        y1[3] = y1[0];
+        curve2->setBrush(cc[mp_TriEle[i].Material]);
+        curve2->setData(x1,y1);
+    }
 
-//边界绘制
-//    qDebug() << m_num_EdgEle;
+    //边界绘制
+    //    qDebug() << m_num_EdgEle;
     for(int i = 0; i < m_num_EdgEle; i++){
-         QCPGraph *graph1 = customplot1->addGraph(); //graph1负责边界单元绘制
-         QVector <double> x1(2);
-         QVector <double> y1(2);
-         for(int j = 0; j < 2; j++){
-             x1[j] = mp_2DNode[mp_EdgEle[i].n[j]].x;
-             y1[j] = mp_2DNode[mp_EdgEle[i].n[j]].y;
-         }
-         QPen graph1pen;
-         if(mp_EdgEle[i].bdr == 0){
-             graph1pen.setColor(Qt::white);
-         }
-         else graph1pen.setColor(Qt::black);
-         graph1pen.setWidthF(3);
-         graph1->setPen(graph1pen);
-         graph1->setData(x1,y1);
+        QCPGraph *graph1 = customplot1->addGraph(); //graph1负责边界单元绘制
+        QVector <double> x1(2);
+        QVector <double> y1(2);
+        for(int j = 0; j < 2; j++){
+            x1[j] = mp_2DNode[mp_EdgEle[i].n[j]].x;
+            y1[j] = mp_2DNode[mp_EdgEle[i].n[j]].y;
+        }
+        QPen graph1pen;
+        if(mp_EdgEle[i].bdr == 0){
+            graph1pen.setColor(Qt::white);
+        }
+        else graph1pen.setColor(Qt::black);
+        graph1pen.setWidthF(3);
+        graph1->setPen(graph1pen);
+        graph1->setData(x1,y1);
     }
 
 
@@ -771,7 +778,7 @@ int CTemp2DFEMCore::DDTLMSolve()
     QList<int> interfacePoints;
     int IFPOINT = 1000;//标记为交界点
     for(int i = 0;i < m_num_TriEle;++i){
-//        qDebug() << "epartTable[" << i << "]= " << epartTable[i];
+        //        qDebug() << "epartTable[" << i << "]= " << epartTable[i];
         if(epartTable[i] != npartTable[mp_TriEle[i].n[0]]){
             npartTable[mp_TriEle[i].n[0]] = IFPOINT;
 
@@ -842,13 +849,13 @@ int CTemp2DFEMCore::DDTLMSolve()
         qDebug()<<"Partition "<<i<<" free nodes: "<<order;
     }
 
-//    std::ofstream mycoutnpart("..\\tempFEM\\test\\npart.txt");
-//    for(int i = 0; i < m_num_pts; i++){
-//        for(int j = 0; j < m_num_part; j++){
-//            mycoutnpart << npart[j][i] << " ";
-//        }
-//        mycoutnpart << endl;
-//    }
+    //    std::ofstream mycoutnpart("..\\tempFEM\\test\\npart.txt");
+    //    for(int i = 0; i < m_num_pts; i++){
+    //        for(int j = 0; j < m_num_part; j++){
+    //            mycoutnpart << npart[j][i] << " ";
+    //        }
+    //        mycoutnpart << endl;
+    //    }
     //7.仿照epartTable构造lpartTable，这里只包含第三类边界条件
     int *lpartTable = (int*)malloc(m_num_EdgEle*sizeof(int));
     QVector<int> numbdr(m_num_part);
@@ -857,15 +864,15 @@ int CTemp2DFEMCore::DDTLMSolve()
             for(int j = 0; j < m_num_part; j++){
                 if(Edgpart[j][i] != 0){
                     ++numbdr[j];
-//                    qDebug() << "i = " << i;
+                    //                    qDebug() << "i = " << i;
                     lpartTable[i] = j;
                     break;
-               }
+                }
             }
         }
         else lpartTable[i] = -1;
-//        if(lpartTable[i] != -1)
-//        qDebug() << "lpartTable" << i << " = " << lpartTable[i];
+        //        if(lpartTable[i] != -1)
+        //        qDebug() << "lpartTable" << i << " = " << lpartTable[i];
     }
 
     //8.定义传输线，初始化定义入射过程中节点的电压
@@ -874,14 +881,14 @@ int CTemp2DFEMCore::DDTLMSolve()
         tl[i] = (CInterfacePoint *)malloc(interfacePoints.size() * sizeof(CInterfacePoint));
         for(int j = 0;j < interfacePoints.size();++j){
             //tl[i][j].Vi = pmeshnode[interfacePoints.at(j)].A;
-           // fscanf(fp,"%lf \n",&(tl[i][j].Vi));
+            // fscanf(fp,"%lf \n",&(tl[i][j].Vi));
             tl[i][j].Vi = 0;//tl[i][j].Vi;//pmeshnode[interfacePoints.at(j)].A -
             tl[i][j].Y0 = 0.05;
         }
         //输出每个分区单元数目
         qDebug()<<"Number of TriElements in partition "<<i<<" is "<<TriEle_num_part[i];
     }
-//    qDebug() << "partinterfacepoints 0" << " = " << partinterfacepoints[0];
+    //    qDebug() << "partinterfacepoints 0" << " = " << partinterfacepoints[0];
 
 
     //PART II:DDTLM迭代
@@ -921,8 +928,8 @@ int CTemp2DFEMCore::DDTLMSolve()
                 Se = (PI*mp_TriEle[k].cond*mp_TriEle[k].xavg*(mp_TriEle[k].r[i]*mp_TriEle[k].r[j]+mp_TriEle[k].q[i]*mp_TriEle[k].q[j]))/(2*mp_TriEle[k].Area);
                 locs[ePart](0,pos[ePart]) = npart[ePart][mp_TriEle[k].n[i]];
                 locs[ePart](1,pos[ePart]) = npart[ePart][mp_TriEle[k].n[j]];
-//                qDebug() << "npart[ePart][mp_TriEle[k].n[i]] = " << npart[ePart][mp_TriEle[k].n[i]];
-//                qDebug() << "npart[ePart][mp_TriEle[k].n[j]] = " << npart[ePart][mp_TriEle[k].n[j]];
+                //                qDebug() << "npart[ePart][mp_TriEle[k].n[i]] = " << npart[ePart][mp_TriEle[k].n[i]];
+                //                qDebug() << "npart[ePart][mp_TriEle[k].n[j]] = " << npart[ePart][mp_TriEle[k].n[j]];
                 vals[ePart](0,pos[ePart]) = Se;
                 partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) = partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) + Se;
                 ++pos[ePart];
@@ -936,7 +943,7 @@ int CTemp2DFEMCore::DDTLMSolve()
     for(int k = 0; k < m_num_EdgEle; k++){
         int lPart = lpartTable[k];
         if(mp_EdgEle[k].bdr == 3){
-//            qDebug() << lPart;
+            //            qDebug() << lPart;
             for(int i = 0; i < 2; i++){
                 for(int j = 0; j < 2; j++){
                     if(i == j){
@@ -969,7 +976,7 @@ int CTemp2DFEMCore::DDTLMSolve()
 
     for(int i = 0; i < m_num_part; i++){
         qDebug() << "pos" << i << " = " << pos[i];
-//        qDebug() << "locs" << i << "size = " << 9*TriEle_num_part[i]+4*numbdr[i];
+        //        qDebug() << "locs" << i << "size = " << 9*TriEle_num_part[i]+4*numbdr[i];
     }
     //求解过程
     int time = 0;
@@ -977,7 +984,7 @@ int CTemp2DFEMCore::DDTLMSolve()
     QVector<vec> F1 = F;
     while(time++ < MAX_ITER ){
         pos = pos1;
-        #pragma omp parallel for
+#pragma omp parallel for
         for(int part = 0; part < m_num_part; ++part){
             //入射过程求解，每个部分装配上交界点，然后解算
             //叠加每个part的右侧列向量和系数矩阵
@@ -985,15 +992,15 @@ int CTemp2DFEMCore::DDTLMSolve()
                 int n = npart[part][interfacePoints.at(i)];
                 if(n != -1){
                     tl[part][i].Vi = inter_voltage[i] - tl[part][i].Vi;
-//                    qDebug() << "interfacePoints.at(i) = " << interfacePoints.at(i);
-//                    qDebug() <<"n = " << n;
+                    //                    qDebug() << "interfacePoints.at(i) = " << interfacePoints.at(i);
+                    //                    qDebug() <<"n = " << n;
                     double current = 2*tl[part][i].Vi*tl[part][i].Y0;
                     locs[part](0,pos[part]) = n;
                     locs[part](1,pos[part]) = n;
                     vals[part](0,pos[part]) = tl[part][i].Y0;
                     F[part](n) = F1[part](n) + current;
-//                    qDebug() << "part = " << part;
-//                    qDebug() << "i = " << i;
+                    //                    qDebug() << "part = " << part;
+                    //                    qDebug() << "i = " << i;
                 }
                 else{
                     locs[part](0,pos[part]) = 0;
@@ -1004,7 +1011,7 @@ int CTemp2DFEMCore::DDTLMSolve()
             }
 
             //求解过程
-//            SparseSolve(locs[part], vals[part], F[part], freenodepart[part]);
+            //            SparseSolve(locs[part], vals[part], F[part], freenodepart[part]);
             sp_mat X1(true, locs[part], vals[part], freenodepart[part], freenodepart[part], true, true);
             SuperMatrix sluA;
             NCformat *Astore;
@@ -1048,22 +1055,22 @@ int CTemp2DFEMCore::DDTLMSolve()
             StatInit(&stat);
             dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
             if (info == 0) {
-//                qDebug()<<"Ok.";
+                //                qDebug()<<"Ok.";
                 /* This is how you could access the solution matrix. */
                 double *sol = (double*)((DNformat*)B.Store)->nzval;
                 for(int i = 0; i < freenodepart[part]; ++i){
                     Va[part](i) = sol[i];
-//                    qDebug() << "Va[" << part << "](" << i << ") = " << Va[part](i);
+                    //                    qDebug() << "Va[" << part << "](" << i << ") = " << Va[part](i);
                 }
             }else {
                 qDebug() << "info = " << info;
             }
 
             SUPERLU_FREE(rhs);
-        //    SUPERLU_FREE(xact);
+            //    SUPERLU_FREE(xact);
             SUPERLU_FREE(perm_r);
             SUPERLU_FREE(perm_c);
-        //    Destroy_CompCol_Matrix(&A);
+            //    Destroy_CompCol_Matrix(&A);
             Destroy_SuperMatrix_Store(&B);
             Destroy_SuperNode_Matrix(&L);
             Destroy_CompCol_Matrix(&U);
@@ -1124,4 +1131,223 @@ int CTemp2DFEMCore::DDTLMSolve()
     }
 
     return 0;
+}
+
+int CTemp2DFEMCore::NRSolve()
+{
+    const double PI = 3.14159265358979323846;
+    int pos = 0;
+    //1.确定第三类边界条件单元数量
+    int numbdr = 0;
+    for(int i = 0; i < m_num_EdgEle; i++){
+        if(mp_EdgEle[i].bdr == 3) numbdr++;
+    }
+    //2.确定线性三角形单元和非线性三角形单元的数量
+    int num_linear = 0;
+    int num_nonlinear = 0;
+    for(int i = 0; i < m_num_TriEle; ++i){
+        if(mp_TriEle[i].LinearFlag == 1){
+            ++num_linear;
+        }else{
+            ++num_nonlinear;
+        }
+    }
+    qDebug() << "number of linear element = " << num_linear;
+    qDebug() << "number of nonlinear element = " << num_nonlinear;
+    //3.求解每个单元的系数矩阵
+    CTriResistMarix* TriResist = (CTriResistMarix*)malloc(m_num_TriEle * sizeof(CTriResistMarix));
+    for(int k = 0; k < m_num_TriEle; ++k){
+        for(int i = 0; i < 3; ++i){
+            for(int j = 0; j < 3; ++j){
+                TriResist[k].C[i][j] = (PI*mp_TriEle[k].xavg*(mp_TriEle[k].r[i]*mp_TriEle[k].r[j]+mp_TriEle[k].q[i]*mp_TriEle[k].q[j]))/(2*mp_TriEle[k].Area);
+            }
+        }
+    }
+    //4.线性单元装配过程
+    umat locs(2, 9*m_num_TriEle+4*numbdr);
+    mat vals(1, 9*m_num_TriEle+4*numbdr);
+    std::ofstream mycoutS("..\\tempFEM\\test\\S.txt");
+    std::ofstream mycoutF("..\\tempFEM\\test\\F.txt");
+    std::ofstream mycouth("..\\tempFEM\\test\\h.txt");
+    std::ofstream mycoutText("..\\tempFEM\\test\\Text.txt");
+    std::ofstream mycoutd("..\\tempFEM\\test\\d.txt");
+    std::ofstream mycoutFl("..\\tempFEM\\test\\Fl.txt");
+    std::ofstream mycoutxavg("..\\tempFEM\\test\\xavg.txt");
+    vec Va = zeros<vec>(m_num_pts);
+    for(int i = 0; i < m_num_pts; ++i){
+        Va(i) = 273.15;
+    }
+    vec Va_old = zeros<vec>(m_num_pts);
+    //三角形单元装配过程
+    //    mat Se = zeros<mat>(3,3);
+    double Se;
+    double Fe;
+    double Sl;
+    //    double Fl;
+    vec Fl = zeros<vec>(2);
+    for(int k = 0; k < m_num_TriEle; k++){
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                if(mp_TriEle[k].LinearFlag == 1){
+                    Se = mp_TriEle[k].cond*TriResist[k].C[i][j];
+                    locs(0, pos) = mp_TriEle[k].n[i];
+                    locs(1, pos) = mp_TriEle[k].n[j];
+                    vals(0, pos) = Se;
+                    ++pos;
+                }
+            }
+            Fe = PI*mp_TriEle[k].source*mp_TriEle[k].Area*(mp_TriEle[k].x[i]+3.*mp_TriEle[k].xavg)/6.;
+            F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + Fe;
+        }
+    }
+
+    //线单元装配过程
+    for(int k = 0; k < m_num_EdgEle; k++){
+        for(int i = 0; i < 2; i++){
+            if(mp_EdgEle[k].bdr == 3){
+                for(int j = 0; j < 2; j++){
+                    if(i == j){
+                        Sl = PI*mp_EdgEle[k].h*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg+2*mp_EdgEle[k].x[i])/6.;
+                    }
+                    else{
+                        Sl = PI*mp_EdgEle[k].h*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg)/6.;
+                    }
+                    //                    cout << Sl << endl;
+                    S(mp_EdgEle[k].n[i], mp_EdgEle[k].n[j]) = S(mp_EdgEle[k].n[i], mp_EdgEle[k].n[j]) + Sl;
+                    locs(0, pos) = mp_EdgEle[k].n[i];
+                    locs(1, pos) = mp_EdgEle[k].n[j];
+                    vals(0, pos) = Sl;
+                    ++pos;
+                }
+                Fl(i) = PI*mp_EdgEle[k].h*mp_EdgEle[k].Text*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg+mp_EdgEle[k].x[i])/3.;
+                F(mp_EdgEle[k].n[i]) = F(mp_EdgEle[k].n[i])+Fl(i);
+            }else if(mp_EdgEle[k].bdr == 2){
+                Fl(i) = PI*mp_EdgEle[k].heatflux*mp_EdgEle[k].d*(mp_EdgEle[k].x[i]+2.*mp_EdgEle[k].xavg)/3.;
+                F(mp_EdgEle[k].n[i]) = F(mp_EdgEle[k].n[i])+Fl(i);
+            }
+        }
+    }
+
+    //5.迭代过程
+    int MAX_ITER = 200;
+    int pos1 = pos;
+    vec F1 = F;
+    //叠加非线性部分
+    for(int iter = 0; iter < MAX_ITER; ++iter){
+        pos = pos1;
+        F = F1;
+        for(int k = 0; k < m_num_TriEle; k++){
+            if(mp_TriEle[k].LinearFlag == 0){
+                //取得当前单元内的平均温度，进而求出热导率
+                int n[3];
+                for(int i = 0; i < 3; ++i){
+                    n[i] = mp_TriEle[k].n[i];
+                }
+                double T = Va(n[0])+Va(n[1])+Va(n[2])/3;
+                double Cond = TtoCond(T);
+                double CondPartialT = (TtoCond(T+0.01)-TtoCond(T))/0.01;
+                for(int i = 0; i < 3; i++){
+                    for(int j = 0; j < 3; j++){
+                        Se = Cond*TriResist[k].C[i][j];
+                        locs(0, pos) = mp_TriEle[k].n[i];
+                        locs(1, pos) = mp_TriEle[k].n[j];
+                        vals(0, pos) = Se;
+                        ++pos;
+                    }
+                }
+            }
+        }
+
+        X = new sp_mat(true, locs, vals, m_num_pts, m_num_pts, true, true);
+
+        SuperMatrix sluA;
+        NCformat *Astore;
+        double   *a;
+        int      *asub, *xa;
+        int      *perm_c; /* column permutation vector */
+        int      *perm_r; /* row permutations from partial pivoting */
+        SuperMatrix L;      /* factor L */
+        SuperMatrix U;      /* factor U */
+        SuperMatrix B;
+        int      nrhs, ldx, info, m, n, nnz;
+        double   *rhs;
+        mem_usage_t   mem_usage;
+        superlu_options_t options;
+        SuperLUStat_t stat;
+
+        set_default_options(&options);
+
+        /* create matrix A in Harwell-Boeing format.*/
+        m = m_num_pts; n = m_num_pts; nnz = X->n_nonzero;
+        a = const_cast<double *>(X->values);
+        asub = (int*)const_cast<unsigned int*>(X->row_indices);
+        xa = (int*)const_cast<unsigned int*>(X->col_ptrs);
+        dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
+        Astore = (NCformat *)sluA.Store;
+        printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
+
+        nrhs = 1;
+        if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
+        //将内存拷贝过来
+        //memmove(rhs, unknown_b, 5*sizeof(double));
+        for (int i = 0; i < m; i++){
+            rhs[i] = F(i);
+        }
+        dCreate_Dense_Matrix(&B, m, nrhs, rhs, m, SLU_DN, SLU_D, SLU_GE);
+
+        if (!(perm_c = intMalloc(n))) ABORT("Malloc fails for perm_c[].");
+        if (!(perm_r = intMalloc(m))) ABORT("Malloc fails for perm_r[].");
+
+        /* Initialize the statistics variables. */
+        StatInit(&stat);
+
+        dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
+        if (info == 0) {
+            qDebug()<<"Ok.";
+            /* This is how you could access the solution matrix. */
+            double *sol = (double*)((DNformat*)B.Store)->nzval;
+            for(int i = 0; i < m_num_pts; ++i){
+                Va(i) = sol[i];
+//                qDebug() << Va(i);
+            }
+        }else {
+            qDebug() << "info = " << info;
+        }
+
+        SUPERLU_FREE(rhs);
+        //    SUPERLU_FREE(xact);
+        SUPERLU_FREE(perm_r);
+        SUPERLU_FREE(perm_c);
+        //    Destroy_CompCol_Matrix(&A);
+        Destroy_SuperMatrix_Store(&B);
+        Destroy_SuperNode_Matrix(&L);
+        Destroy_CompCol_Matrix(&U);
+        //6.判断收敛性
+        double inner_error = 1;
+        double a0 = 0, b = 0;
+        for(int i = 0; i < m_num_pts; ++i){
+            a0 += (Va_old[i] - Va[i])*(Va_old[i] - Va[i]);
+            b += Va[i] * Va[i];
+        }
+        inner_error = sqrt(a0)/sqrt(b);
+        qDebug() << "inner_error = " << inner_error;
+        if(inner_error > Precision){
+            Va_old = Va;
+        }else{
+            for(int i = 0; i < m_num_pts; ++i){
+                mp_2DNode[i].V = Va(i);
+            }
+            break;
+        }
+    }
+
+    //整理结果
+    std::ofstream mytemp("..\\tempFEM\\test\\temp.txt");
+    mytemp << Va;
+    return 0;
+}
+
+double CTemp2DFEMCore::TtoCond(double T)
+{
+    return -0.00227583562+1.15480022e-4*T-7.90252856e-8*T*T+4.11702505e-11*T*T*T-7.43864331e-15*T*T*T*T;
 }

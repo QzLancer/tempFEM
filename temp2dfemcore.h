@@ -25,9 +25,11 @@ public:
     int GenerateMetisMesh(int partition);
     int drawBDR();  //绘制边界
     int DDTLMSolve();   //通过DDTLM求解
+    int NRSolve();
 
 private:
     void printfile(char *ch);
+    double TtoCond(double T);
     int m_num_pts;
     int m_num_VtxEle;
     int m_num_EdgEle;
@@ -49,7 +51,7 @@ private:
     int *epartTable;    //保存三角形单元在第几个分区
     int *npartTable;    //保存节点在第几个分区
     sp_mat* X;
-    double Precision{1e-3};
+    double Precision{1e-6};
 };
 
 #endif // TEMP2DFEMCORE_H
