@@ -1480,7 +1480,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
             //tl[i][j].Vi = pmeshnode[interfacePoints.at(j)].A;
             // fscanf(fp,"%lf \n",&(tl[i][j].Vi));
             tl[i][j].Vi = 0;//tl[i][j].Vi;//pmeshnode[interfacePoints.at(j)].A -
-            tl[i][j].Y0 = 0.01;
+            tl[i][j].Y0 = 0.05;
         }
         //输出每个分区单元数目
         qDebug()<<"Number of TriElements in partition "<<i<<" is "<<TriEle_num_part[i];
@@ -1510,8 +1510,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
     QVector <mat>vals;
     QVector <int>pos(m_num_part);
     QVector <vec>F;
-    QVector <mat>partS;
-    double Se, Fe, Sl, Fl;
+//    QVector <mat>partS;
     for(int part = 0; part < m_num_part; ++part){
         umat loc = zeros<umat>(2, 9*TriEle_num_part[part]+4*numbdr[part]+interfacePoints.size());
         locs.push_back(std::move(loc));
@@ -1520,13 +1519,12 @@ int CTemp2DFEMCore::DRDDTLMSolve()
         pos[part] = 0;
         vec F1 = zeros<vec>(freenodepart[part]);
         F.push_back(std::move(F1));
-        mat S1 = zeros<mat>(freenodepart[part], freenodepart[part]);
-        partS.push_back(std::move(S1));
+//        mat S1 = zeros<mat>(freenodepart[part], freenodepart[part]);
+//        partS.push_back(std::move(S1));
     }
 #pragma omp parallel for
     for(int part = 0; part < m_num_part; ++part){
         //1.装配三角形单元线性部分
-        const double PI = 3.1415926535;
         double Se, Fe, Sl, Fl;
         for(int k = 0; k < m_num_TriEle; k++){
             int ePart = epartTable[k];
@@ -1538,7 +1536,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
                             locs[ePart](0,pos[ePart]) = npart[ePart][mp_TriEle[k].n[i]];
                             locs[ePart](1,pos[ePart]) = npart[ePart][mp_TriEle[k].n[j]];
                             vals[ePart](0,pos[ePart]) = Se;
-                            partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) = partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) + Se;
+//                            partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) = partS[ePart](npart[ePart][mp_TriEle[k].n[i]], npart[ePart][mp_TriEle[k].n[j]]) + Se;
                             ++pos[ePart];
                         }
                     }
@@ -1564,7 +1562,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
                             locs[lPart](0,pos[lPart]) = npart[lPart][mp_EdgEle[k].n[i]];
                             locs[lPart](1,pos[lPart]) = npart[lPart][mp_EdgEle[k].n[j]];
                             vals[lPart](0,pos[lPart]) = Sl;
-                            partS[lPart](npart[lPart][mp_EdgEle[k].n[i]], npart[lPart][mp_EdgEle[k].n[j]]) = partS[lPart](npart[lPart][mp_EdgEle[k].n[i]], npart[lPart][mp_EdgEle[k].n[j]]) + Se;
+//                            partS[lPart](npart[lPart][mp_EdgEle[k].n[i]], npart[lPart][mp_EdgEle[k].n[j]]) = partS[lPart](npart[lPart][mp_EdgEle[k].n[i]], npart[lPart][mp_EdgEle[k].n[j]]) + Se;
                             ++pos[lPart];
                         }
                         Fl = PI*mp_EdgEle[k].h*mp_EdgEle[k].Text*mp_EdgEle[k].d*(2*mp_EdgEle[k].xavg+mp_EdgEle[k].x[i])/3;
@@ -1575,10 +1573,10 @@ int CTemp2DFEMCore::DRDDTLMSolve()
         }
     }
 
-    std::ofstream mypartS("../tempFEM/test/partS.txt", ios::ate);
-    for(int part = 0; part < m_num_part; ++part){
-        mypartS << partS[part] << endl << endl;
-    }
+//    std::ofstream mypartS("../tempFEM/test/partS.txt", ios::ate);
+//    for(int part = 0; part < m_num_part; ++part){
+//        mypartS << partS[part] << endl << endl;
+//    }
 
     std::ofstream mypartF("../tempFEM/test/partF.txt", ios::ate);
     for(int part = 0; part < m_num_part; ++part){
@@ -1586,10 +1584,8 @@ int CTemp2DFEMCore::DRDDTLMSolve()
     }
 
     //B: 迭代过程
-    int MAX_OUTTER_ITER = 500;
-    const double inner_precision = 1e-6;
+    const int MAX_OUTTER_ITER = 500;
     const double outter_precision = 1e-6;
-    int MAX_INNER_ITER = 500;
     QVector<int> pos1 = pos;
     QVector<vec> F1 = F;
     for(int iter = 0; iter < MAX_OUTTER_ITER; ++iter){
@@ -1597,6 +1593,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
         F = F1;
 #pragma omp parallel for
         for(int part = 0; part < m_num_part; ++part){
+            double Se;
             //1.入射装配过程，每个部分装配上交界点
             for(int i = 0; i < interfacePoints.size(); ++i){
                 int n = npart[part][interfacePoints.at(i)];
@@ -1618,6 +1615,8 @@ int CTemp2DFEMCore::DRDDTLMSolve()
             QVector<int> pos2 = pos;
             QVector<vec> F2 = F;
             //2.每个part的迭代过程
+            const int MAX_INNER_ITER = 500;
+            const double inner_precision = 1e-6;
             for(int inner_iter = 0; inner_iter < MAX_INNER_ITER; ++inner_iter){
                 pos = pos2;
                 F = F2;

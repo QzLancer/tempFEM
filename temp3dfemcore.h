@@ -24,6 +24,7 @@ public:
     int DDTLM3DSolve();   //通过DDTLM求解
     int DDTLM3DSolve1();   //通过DDTLM求解
     int NRSolve();
+    int NRDDTLMSolve();
 private:
     double TtoCond(double T);
     Widget *m_Widget;
@@ -34,7 +35,7 @@ private:
     int m_num_EdgEle{0};
     int m_num_TriEle{0};
     int m_num_TetEle{0};
-    int m_num_Part{0};
+    int m_num_part{0};
     C3DNode *mp_3DNode;
     CVtxElement *mp_VtxEle;
     CEdgElement *mp_EdgEle;

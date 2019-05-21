@@ -80,3 +80,5 @@ INCLUDEPATH +=     metis-5.1.0/GKlib\
 LIBS += D:\tempFEM\tempFEM0\tempFEM\metis.lib\
         D:\DDTLM\SuperLU_5.2.1\SuperLU\x64\Release\SuperLU.lib \
         D:\DDTLM\SuperLU_5.2.1\SuperLU\x64\Release\CBLAS.lib \
+
+QMAKE_CXXFLAGS += /openmp
