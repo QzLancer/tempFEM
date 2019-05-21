@@ -26,6 +26,7 @@ public:
     int drawBDR();  //绘制边界
     int DDTLMSolve();   //通过DDTLM求解
     int NRSolve();
+    int DRDDTLMSolve();
 
 private:
     void printfile(char *ch);
@@ -51,7 +52,7 @@ private:
     int *epartTable;    //保存三角形单元在第几个分区
     int *npartTable;    //保存节点在第几个分区
     sp_mat* X;
-    double Precision{1e-6};
+    double Precision{1e-8};
 };
 
 #endif // TEMP2DFEMCORE_H

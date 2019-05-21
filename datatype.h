@@ -3,13 +3,13 @@
 
 struct C2DNode{
     double x{0}, y{0};//the co
-    double V{0};//the solution
+    double V{273.15};//the solution
     int bdr{0};//boundary type，根据COMSOL中的设置来定义 0无影响，1为强迫边界条件，用于求解，2和3分别为第二类边界条件和第三类边界条件，用于区域分解
 };
 
 struct  C3DNode{
     double x{0}, y{0}, z{0};
-    double V{0};
+    double V{273.15};
     int bdr{0};
 }
 ;
@@ -75,21 +75,12 @@ struct CInterfacePoint{
     double Vi{0};   //入射电压或者反射电压
 };
 
-struct CTriResistMarix{
+struct CTriResistMatrix{
     double C[3][3];
 };
 
-struct CTetResisMatrix{
-    double Y11;
-    double Y12;
-    double Y13;
-    double Y14;
-    double Y22;
-    double Y23;
-    double Y24;
-    double Y33;
-    double Y34;
-    double Y44;
+struct CTetResistMatrix{
+    double C[4][4];
 };
 
 enum Demo{

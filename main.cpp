@@ -10,10 +10,12 @@ void ddtlm(Widget *parent, int part);
 void solve3dcontactor(Widget *parent);
 void ddtlm3d(Widget *parent, int part);
 void solvecontactorNR(Widget *parent);
+void solve3dcontactorNR(Widget *parent);
+void NRddtlm(Widget *parent, int part);
 int main(int argc, char *argv[])
 {
 
-    Demo showWhat = SOLVECONTACTORNR;
+    Demo showWhat = NRDDTLM;
     QApplication a(argc, argv);
     Widget w;
     w.show();
@@ -41,6 +43,12 @@ int main(int argc, char *argv[])
         break;
         case SOLVECONTACTORNR:
             solvecontactorNR(&w);
+        break;
+        case SOLVE3DCONTACTORNR:
+            solve3dcontactorNR(&w);
+        break;
+        case NRDDTLM:
+            NRddtlm(&w, 4);
         break;
     }
 
@@ -96,7 +104,7 @@ void ddtlm(Widget *parent, int part){
 }
 
 void solve3dcontactor(Widget *parent){
-    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D1.mphtxt");
+    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D.mphtxt");
     temp->Load3DFEMCOMSOL();
     temp->preCalculation();
     temp->setCondition();
@@ -119,4 +127,22 @@ void solvecontactorNR(Widget *parent){
     temp->preCalculation();
     temp->setCondition(SOLVECONTACTORNR);
     temp->NRSolve();
+}
+
+void solve3dcontactorNR(Widget *parent)
+{
+    CTemp3DFEMCore *temp = new CTemp3DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor3D.mphtxt");
+    temp->Load3DFEMCOMSOL();
+    temp->preCalculation();
+    temp->setCondition();
+    temp->NRSolve();
+}
+
+void NRddtlm(Widget *parent, int part){
+    CTemp2DFEMCore *temp = new CTemp2DFEMCore(parent, "..\\tempFEM\\model\\mesh_contactor.mphtxt");
+    temp->Load2DMeshCOMSOL();
+    temp->GenerateMetisMesh(part);
+    temp->preCalculation();
+    temp->setCondition(SOLVECONTACTORNR);
+    temp->DRDDTLMSolve();
 }

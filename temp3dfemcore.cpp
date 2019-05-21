@@ -344,7 +344,7 @@ int CTemp3DFEMCore::setCondition()
         else if((mp_TetEle[i].domain == 3) | (mp_TetEle[i].domain == 5) | (mp_TetEle[i].domain == 11)){
             mp_TetEle[i].cond = 0.03;
             mp_TetEle[i].Material = 3;
-            mp_TetEle[i].LinearFlag = 1;
+            mp_TetEle[i].LinearFlag = 0;
         }
     }
     //第三类边界条件设置
@@ -379,7 +379,7 @@ int CTemp3DFEMCore::Static3DAssemble()
     double Ft;
     double Se;
     double Fe;
-//        mat S = zeros<mat>(m_num_pts, m_num_pts);
+    //        mat S = zeros<mat>(m_num_pts, m_num_pts);
     //四面体单元装配
     //    std::ofstream myFt("../tempFEM/test/Ft.txt");
     for(int k = 0; k < m_num_TetEle; ++k){
@@ -389,7 +389,7 @@ int CTemp3DFEMCore::Static3DAssemble()
                 locs(0, pos) = mp_TetEle[k].n[i];
                 locs(1, pos) = mp_TetEle[k].n[j];
                 vals(0, pos) = St;
-//                                S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) = S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) + St;
+                //                                S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) = S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) + St;
                 ++pos;
             }
             Ft = mp_TetEle[k].source*mp_TetEle[k].Volume/4;
@@ -409,7 +409,7 @@ int CTemp3DFEMCore::Static3DAssemble()
                     }else{
                         Se = mp_TriEle[k].h*mp_TriEle[k].Area/12;
                     }
-//                                        S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) = S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) + Se;
+                    //                                        S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) = S(mp_TetEle[k].n[i], mp_TetEle[k].n[j]) + Se;
                     locs(0, pos) = mp_TriEle[k].n[i];
                     locs(1, pos) = mp_TriEle[k].n[j];
                     //                    if(Se == 0){
@@ -440,10 +440,10 @@ int CTemp3DFEMCore::Static3DAssemble()
     //    mylocs << locs.t();
     //    std::ofstream myvals("../tempFEM/test/vals.txt");
     //    myvals << vals.t();
-        std::ofstream myF3D("../tempFEM/test/F3D.txt");
-        myF3D << F;
-//        std::ofstream myS3D("../tempFEM/test/S3D.txt");
-//        myS3D << S;
+    std::ofstream myF3D("../tempFEM/test/F3D.txt");
+    myF3D << F;
+    //        std::ofstream myS3D("../tempFEM/test/S3D.txt");
+    //        myS3D << S;
 
     sp_mat X(true, locs, vals, m_num_pts, m_num_pts, true, true);
     SuperMatrix sluA;
@@ -773,7 +773,7 @@ int CTemp3DFEMCore::DDTLM3DSolve()
                     }
                 }
             }
-//            qDebug() << "pos0 " << part << " = " << pos;
+            //            qDebug() << "pos0 " << part << " = " << pos;
             //每个区域的三角形单元装配
             for(int k = 0; k < m_num_TriEle; ++k){
                 int tripart = epartTable[k];
@@ -860,22 +860,22 @@ int CTemp3DFEMCore::DDTLM3DSolve()
             StatInit(&stat);
             dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
             if (info == 0) {
-//                qDebug()<<"Ok.";
+                //                qDebug()<<"Ok.";
                 /* This is how you could access the solution matrix. */
                 double *sol = (double*)((DNformat*)B.Store)->nzval;
                 for(int i = 0; i < freenodepart[part]; ++i){
                     Va[part][i] = sol[i];
-//                    qDebug() << "Va[" << part << "](" << i << ") = " << Va[part][i];
+                    //                    qDebug() << "Va[" << part << "](" << i << ") = " << Va[part][i];
                 }
             }else {
                 qDebug() << "info = " << info;
             }
 
             SUPERLU_FREE(rhs);
-        //    SUPERLU_FREE(xact);
+            //    SUPERLU_FREE(xact);
             SUPERLU_FREE(perm_r);
             SUPERLU_FREE(perm_c);
-        //    Destroy_CompCol_Matrix(&A);
+            //    Destroy_CompCol_Matrix(&A);
             Destroy_SuperMatrix_Store(&B);
             Destroy_SuperNode_Matrix(&L);
             Destroy_CompCol_Matrix(&U);
@@ -1041,13 +1041,13 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
         mynpart << endl;
     }
     mynpart.close();
-//    //7.为自由节点值分配空间
-//    double **Va = (double **)malloc(m_num_Part * sizeof(double*));
-//    double **Va_old = (double **)malloc(m_num_Part * sizeof(double*));
-//    for(int i = 0;i < m_num_Part;++i){
-//        Va[i] = (double *)calloc(freenodepart[i],  sizeof(double));
-//        Va_old[i] = (double *)calloc(freenodepart[i], sizeof(double));
-//    }
+    //    //7.为自由节点值分配空间
+    //    double **Va = (double **)malloc(m_num_Part * sizeof(double*));
+    //    double **Va_old = (double **)malloc(m_num_Part * sizeof(double*));
+    //    for(int i = 0;i < m_num_Part;++i){
+    //        Va[i] = (double *)calloc(freenodepart[i],  sizeof(double));
+    //        Va_old[i] = (double *)calloc(freenodepart[i], sizeof(double));
+    //    }
     //8.将三角形单元归入到各自的区域中
     int *num_Tri_part = (int*)calloc(m_num_Part, sizeof(int));
     int *epartTable = (int*)calloc(m_num_TriEle, sizeof(int));
@@ -1099,7 +1099,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
     double St, Ft, Se, Fe;
     for(int k = 0; k < m_num_TetEle; k++){
         int tPart = m_tpartTable[k];
-//         qDebug() << "k = " << k;
+        //         qDebug() << "k = " << k;
         for(int i = 0; i < 4; i++){
             for(int j = 0; j < 4; j++){
                 St = mp_TetEle[k].cond*(mp_TetEle[k].q[i]*mp_TetEle[k].q[j]+mp_TetEle[k].r[i]*mp_TetEle[k].r[j]+mp_TetEle[k].s[i]*mp_TetEle[k].s[j])/(36*mp_TetEle[k].Volume);
@@ -1158,15 +1158,15 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
                 int n = npart[part][interfacePoints.at(i)];
                 if(n != -1){
                     tl[part][i].Vi = inter_voltage[i] - tl[part][i].Vi;
-//                    qDebug() << "interfacePoints.at(i) = " << interfacePoints.at(i);
-//                    qDebug() <<"n = " << n;
+                    //                    qDebug() << "interfacePoints.at(i) = " << interfacePoints.at(i);
+                    //                    qDebug() <<"n = " << n;
                     double current = 2*tl[part][i].Vi*tl[part][i].Y0;
                     locs[part](0,pos[part]) = n;
                     locs[part](1,pos[part]) = n;
                     vals[part](0,pos[part]) = tl[part][i].Y0;
                     F[part](n) = F1[part](n) + current;
-//                    qDebug() << "part = " << part;
-//                    qDebug() << "i = " << i;
+                    //                    qDebug() << "part = " << part;
+                    //                    qDebug() << "i = " << i;
                 }
                 else{
                     locs[part](0,pos[part]) = 0;
@@ -1177,7 +1177,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
             }
 
             //求解过程
-//            SparseSolve(locs[part], vals[part], F[part], freenodepart[part]);
+            //            SparseSolve(locs[part], vals[part], F[part], freenodepart[part]);
             sp_mat X1(true, locs[part], vals[part], freenodepart[part], freenodepart[part], true, true);
             SuperMatrix sluA;
             NCformat *Astore;
@@ -1203,7 +1203,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
             xa = (int*)const_cast<unsigned int*>(X1.col_ptrs);
             dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
             Astore = (NCformat *)sluA.Store;
-//            printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
+            //            printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
 
             nrhs = 1;
             if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
@@ -1221,22 +1221,22 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
             StatInit(&stat);
             dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
             if (info == 0) {
-//                qDebug()<<"Ok.";
+                //                qDebug()<<"Ok.";
                 /* This is how you could access the solution matrix. */
                 double *sol = (double*)((DNformat*)B.Store)->nzval;
                 for(int i = 0; i < freenodepart[part]; ++i){
                     Va[part](i) = sol[i];
-//                    qDebug() << "Va[" << part << "](" << i << ") = " << Va[part](i);
+                    //                    qDebug() << "Va[" << part << "](" << i << ") = " << Va[part](i);
                 }
             }else {
                 qDebug() << "info = " << info;
             }
 
             SUPERLU_FREE(rhs);
-        //    SUPERLU_FREE(xact);
+            //    SUPERLU_FREE(xact);
             SUPERLU_FREE(perm_r);
             SUPERLU_FREE(perm_c);
-        //    Destroy_CompCol_Matrix(&A);
+            //    Destroy_CompCol_Matrix(&A);
             Destroy_SuperMatrix_Store(&B);
             Destroy_SuperNode_Matrix(&L);
             Destroy_CompCol_Matrix(&U);
@@ -1253,7 +1253,7 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
                 }
             }
             inter_voltage[i] = I / Y;
-//            qDebug() << "inter_voltage " << i << " = " << inter_voltage[i];
+            //            qDebug() << "inter_voltage " << i << " = " << inter_voltage[i];
         }
         //判断误差
         double outter_error = 1;
@@ -1323,4 +1323,219 @@ int CTemp3DFEMCore::DDTLM3DSolve1()
     //    free(TetRM);
     //    free(TriRM);
     return 0;
+}
+
+int CTemp3DFEMCore::NRSolve()
+{
+    const double PI = 3.14159265358979323846;
+    int pos = 0;
+    //1.确定第三类边界条件三角形单元数量
+    int numbdr = 0;
+    for(int i = 0; i < m_num_TriEle; i++){
+        if(mp_TriEle[i].bdr == 3) numbdr++;
+    }
+    qDebug() << "numbdr = " << numbdr;
+    //2.确定线性四面体单元和非线性四面体单元的数量
+    int num_linear = 0;
+    int num_nonlinear = 0;
+    for(int i = 0; i < m_num_TetEle; ++i){
+        if(mp_TetEle[i].LinearFlag == 1){
+            ++num_linear;
+        }else{
+            ++num_nonlinear;
+        }
+    }
+    qDebug() << "number of linear element = " << num_linear;
+    qDebug() << "number of nonlinear element = " << num_nonlinear;
+    //3.求解每个单元的系数矩阵
+    CTetResistMatrix* TetResist = (CTetResistMatrix*)malloc(m_num_TetEle * sizeof(CTetResistMatrix));
+    for(int k = 0; k < m_num_TetEle; ++k){
+        for(int i = 0; i < 4; ++i){
+            for(int j = 0; j < 4; ++j){
+                TetResist[k].C[i][j] = (mp_TetEle[k].q[i]*mp_TetEle[k].q[j]+mp_TetEle[k].r[i]*mp_TetEle[k].r[j]+mp_TetEle[k].s[i]*mp_TetEle[k].s[j])/(36*mp_TetEle[k].Volume);
+            }
+        }
+    }
+    //4.线性单元装配过程
+    umat locs(2, 16*m_num_TetEle+9*numbdr);
+    mat vals(1, 16*m_num_TetEle+9*numbdr);
+    vec F = zeros<vec>(m_num_pts);
+    double *Va = (double*)calloc(m_num_pts, sizeof(double));
+    double *Va_old = (double*)calloc(m_num_pts, sizeof(double));
+    for(int i = 0; i < m_num_pts; ++i){
+        Va[i] = 273.15;
+        Va_old[i] = 0;
+    }
+    double St;
+    double Ft;
+    double Se;
+    double Fe;
+    //四面体单元装配过程
+    for(int k = 0; k < m_num_TetEle; ++k){
+        for(int i = 0; i < 4; ++i){
+            for(int j = 0; j < 4; ++j){
+                if(mp_TetEle[k].LinearFlag == 1){
+                    St = mp_TetEle[k].cond*TetResist[k].C[i][j];
+                    locs(0, pos) = mp_TetEle[k].n[i];
+                    locs(1, pos) = mp_TetEle[k].n[j];
+                    vals(0, pos) = St;
+                    ++pos;
+                }
+            }
+            Ft = mp_TetEle[k].source*mp_TetEle[k].Volume/4;
+            F(mp_TetEle[k].n[i]) = F(mp_TetEle[k].n[i]) + Ft;
+        }
+    }
+
+    //三角形单元装配
+    for(int k = 0; k < m_num_TriEle; ++k){
+        for(int i = 0; i < 3; ++i){
+            if(mp_TriEle[k].bdr == 3){
+                for(int j = 0; j < 3; ++j){
+                    if(i == j){
+                        Se = mp_TriEle[k].h*mp_TriEle[k].Area/6;
+                    }else{
+                        Se = mp_TriEle[k].h*mp_TriEle[k].Area/12;
+                    }
+                    locs(0, pos) = mp_TriEle[k].n[i];
+                    locs(1, pos) = mp_TriEle[k].n[j];
+                    vals(0, pos) = Se;
+                    ++pos;
+                }
+                Fe = mp_TriEle[k].h*mp_TriEle[k].Text*mp_TriEle[k].Area/3;
+                F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + Fe;
+            }
+
+        }
+    }
+
+    //5.迭代过程
+    int MAX_ITER = 200;
+    int pos1 = pos;
+    vec F1 = F;
+    for(int iter = 0; iter < MAX_ITER; ++iter){
+        pos = pos1;
+        F = F1;
+        for(int k = 0; k < m_num_TetEle; ++k){
+            if(mp_TetEle[k].LinearFlag == 0){
+                int n[4];
+                for(int i = 0; i < 4; ++i){
+                    n[i] = mp_TetEle[k].n[i];
+                }
+                double T = (Va[n[0]]+Va[n[1]]+Va[n[2]]+Va[n[3]])/4;
+                double Cond = TtoCond(T);
+//                qDebug() << "Cond = " << Cond;
+                double CondPartialT = (TtoCond(T+0.01)-TtoCond(T))/0.01;
+//                qDebug() << "CondPartialT = " << CondPartialT;
+                for(int i = 0; i < 4; ++i){
+                    double FJ = 0;
+                    double J1 = CondPartialT*(TetResist[k].C[i][0]*Va[n[0]]+TetResist[k].C[i][1]*Va[n[1]]+TetResist[k].C[i][2]*Va[n[2]]+TetResist[k].C[i][3]*Va[n[3]]);
+                    for(int j = 0; j < 4; ++j){
+                        St = Cond*TetResist[k].C[i][j] + J1;
+                        locs(0, pos) = mp_TetEle[k].n[i];
+                        locs(1, pos) = mp_TetEle[k].n[j];
+                        vals(0, pos) = St;
+                        ++pos;
+                        FJ = FJ+J1*(Va[n[j]]);
+                    }
+                    F(n[i]) = F(n[i]) + FJ;
+                }
+            }
+        }
+
+        sp_mat X(true, locs, vals, m_num_pts, m_num_pts, true, true);
+        SuperMatrix sluA;
+        NCformat *Astore;
+        double   *a;
+        int      *asub, *xa;
+        int      *perm_c; /* column permutation vector */
+        int      *perm_r; /* row permutations from partial pivoting */
+        SuperMatrix L;      /* factor L */
+        SuperMatrix U;      /* factor U */
+        SuperMatrix B;
+        int      nrhs, ldx, info, m, n, nnz;
+        double   *rhs;
+        mem_usage_t   mem_usage;
+        superlu_options_t options;
+        SuperLUStat_t stat;
+
+        set_default_options(&options);
+
+        /* create matrix A in Harwell-Boeing format.*/
+        m = m_num_pts; n = m_num_pts; nnz = X.n_nonzero;
+        a = const_cast<double *>(X.values);
+        asub = (int*)const_cast<unsigned int*>(X.row_indices);
+        xa = (int*)const_cast<unsigned int*>(X.col_ptrs);
+        dCreate_CompCol_Matrix(&sluA, m, n, nnz, a, asub, xa, SLU_NC, SLU_D, SLU_GE);
+        Astore = (NCformat *)sluA.Store;
+        printf("Dimension %dx%d; # nonzeros %d\n", sluA.nrow, sluA.ncol, Astore->nnz);
+
+        nrhs = 1;
+        if (!(rhs = doubleMalloc(m * nrhs))) ABORT("Malloc fails for rhs[].");
+        //将内存拷贝过来
+        //memmove(rhs, unknown_b, 5*sizeof(double));
+        for (int i = 0; i < m; i++){
+            rhs[i] = F(i);
+        }
+        dCreate_Dense_Matrix(&B, m, nrhs, rhs, m, SLU_DN, SLU_D, SLU_GE);
+
+        if (!(perm_c = intMalloc(n))) ABORT("Malloc fails for perm_c[].");
+        if (!(perm_r = intMalloc(m))) ABORT("Malloc fails for perm_r[].");
+
+        /* Initialize the statistics variables. */
+        StatInit(&stat);
+
+        dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
+        if (info == 0) {
+            std::ofstream myTemp3D("../tempFEM/test/Temp3D.txt");
+            /* This is how you could access the solution matrix. */
+            double *sol = (double*)((DNformat*)B.Store)->nzval;
+            for(int i = 0; i < m_num_pts; ++i){
+                Va[i] = sol[i];
+                myTemp3D << Va[i] << endl;
+            }
+            myTemp3D.close();
+        }else {
+            qDebug() << "info = " << info;
+        }
+
+        SUPERLU_FREE(rhs);
+        //    SUPERLU_FREE(xact);
+        SUPERLU_FREE(perm_r);
+        SUPERLU_FREE(perm_c);
+        //    Destroy_CompCol_Matrix(&A);
+        Destroy_SuperMatrix_Store(&B);
+        Destroy_SuperNode_Matrix(&L);
+        Destroy_CompCol_Matrix(&U);
+        //6.判断收敛性
+        double inner_error = 1;
+        double a0 = 0, b = 0;
+        for(int i = 0; i < m_num_pts; ++i){
+            a0 += (Va_old[i] - Va[i])*(Va_old[i] - Va[i]);
+            b += Va[i] * Va[i];
+        }
+        qDebug() << "a0 = " << a0;
+        qDebug() << "b = " << b;
+        inner_error = sqrt(a0)/sqrt(b);
+        qDebug() << "inner_error = " << inner_error;
+        if(inner_error > Precision){
+            for(int i = 0; i < m_num_pts; ++i){
+                Va_old[i] = Va[i];
+            }
+        }else{
+            for(int i = 0; i < m_num_pts; ++i){
+                mp_3DNode[i].V = Va[i];
+            }
+            break;
+        }
+    }
+
+
+    qDebug()<<"Ok.";
+    return 0;
+}
+
+double CTemp3DFEMCore::TtoCond(double T)
+{
+    return -0.00227583562+1.15480022e-4*T-7.90252856e-8*T*T+4.11702505e-11*T*T*T-7.43864331e-15*T*T*T*T;
 }
