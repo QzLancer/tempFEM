@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <omp.h>
 #include <QVector>
+#include <time.h>
 
 CTemp2DFEMCore::CTemp2DFEMCore(Widget *parent, const char *fn):mp_2DNode(nullptr),
     mp_VtxEle(nullptr),
@@ -312,7 +313,7 @@ int CTemp2DFEMCore::setCondition(Demo showWhat)
             //            cout << mp_EdgEle[i].bdr << endl;
         }
     }
-
+    qDebug() << "setCondition successful!";
     return 0;
 }
 
@@ -356,7 +357,7 @@ int CTemp2DFEMCore::StaticAxisAssemble()
             F(mp_TriEle[k].n[i]) = F(mp_TriEle[k].n[i]) + Fe;
         }
     }
-    qDebug() << rank(S)<<S.size();
+//    qDebug() << rank(S)<<S.size();
 
 
 
@@ -446,10 +447,16 @@ int CTemp2DFEMCore::DirectSolve()
         A(v1[i]) = A1[i];
         mp_2DNode[v1[i]].V = A1[i];
     }
+
+    char fpath[256];
+    sprintf(fpath,"../tempFEM/test/Temp_contactor_%d.txt",m_num_TriEle);
+
+    std::ofstream myTemp(fpath);
     for(int i = 0; i < m_num_pts; i++){
-        cout << mp_2DNode[i].V << endl;
+        myTemp << mp_2DNode[i].V << endl;
     }
 
+    qDebug() << "Ok!";
     return 0;
 }
 
@@ -502,8 +509,8 @@ int CTemp2DFEMCore::DirectSolve1()
         /* This is how you could access the solution matrix. */
         double *sol = (double*)((DNformat*)B.Store)->nzval;
         for(int i = 0; i < m_num_pts; ++i){
-            mp_2DNode[i].V = sol[i];
-            qDebug() << mp_2DNode[i].V;
+//            mp_2DNode[i].V = sol[i];
+//            qDebug() << mp_2DNode[i].V;
         }
     }else {
         qDebug() << "info = " << info;
@@ -663,7 +670,7 @@ int CTemp2DFEMCore::GenerateMetisMesh(int partition)
     }
     fclose(fp);
     //绘制分区之后的分网
-    QColor cc[7];
+    QColor cc[15];
     cc[0] = QColor(150, 0, 0);
     cc[1] = QColor(0, 150, 0);
     cc[2] = QColor(0, 0, 150);
@@ -671,6 +678,16 @@ int CTemp2DFEMCore::GenerateMetisMesh(int partition)
     cc[4] = QColor(0, 150, 150);
     cc[5] = QColor(150, 0, 150);
     cc[6] = QColor(150, 150, 150);
+    cc[7] = QColor(50, 0, 0);
+    cc[8] = QColor(0, 50, 0);
+    cc[9] = QColor(0, 0, 50);
+    cc[10] = QColor(50, 50, 0);
+    cc[11] = QColor(0, 50, 50);
+    cc[12] = QColor(50, 0, 50);
+    cc[13] = QColor(50, 50, 50);
+    cc[14] = QColor(100, 0, 0);
+    cc[15] = QColor(0, 100, 0);
+    cc[16] = QColor(0, 0, 100);
 
     for(int i=0;i < m_num_TriEle;++i){
         QCPCurve *newCurve = new QCPCurve(customplot->xAxis, customplot->yAxis);
@@ -1138,6 +1155,9 @@ int CTemp2DFEMCore::DDTLMSolve()
 
 int CTemp2DFEMCore::NRSolve()
 {
+    double t1, t2;
+    double time;
+    t1 = clock();
     const double PI = 3.14159265358979323846;
     int pos = 0;
     //1.确定第三类边界条件单元数量
@@ -1230,13 +1250,16 @@ int CTemp2DFEMCore::NRSolve()
             //            }
         }
     }
-
+    t2 = clock();
+    time = (double)(t2 - t1) / CLOCKS_PER_SEC;
+    qDebug() << "linear Assemble time = " << time;
     //5.迭代过程
     int MAX_ITER = 200;
     int pos1 = pos;
     vec F1 = F;
     //叠加非线性部分
     for(int iter = 0; iter < MAX_ITER; ++iter){
+        t1 = clock();
         pos = pos1;
         F = F1;
         for(int k = 0; k < m_num_TriEle; k++){
@@ -1338,6 +1361,9 @@ int CTemp2DFEMCore::NRSolve()
         }
         inner_error = sqrt(a0)/sqrt(b);
         qDebug() << "inner_error = " << inner_error;
+        t2 = clock();
+        time = (double)(t2-t1)/CLOCKS_PER_SEC;
+        qDebug() << "iterate step " << iter << " time = " << time;
         if(inner_error > Precision){
             Va_old = Va;
         }else{
@@ -1349,8 +1375,13 @@ int CTemp2DFEMCore::NRSolve()
     }
 
     //整理结果
-    std::ofstream mytemp("..\\tempFEM\\test\\temp.txt");
-    mytemp << Va;
+
+    char fpath[256];
+    sprintf(fpath,"../tempFEM/test/TempNR_%d.txt",m_num_TriEle);
+    std::ofstream mytemp(fpath);
+    for(int i = 0; i < m_num_pts; ++i){
+        mytemp << mp_2DNode[i].x << " " << mp_2DNode[i].y << " " << Va(i) << endl;
+    }
     return 0;
 }
 
@@ -1522,6 +1553,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
 //        mat S1 = zeros<mat>(freenodepart[part], freenodepart[part]);
 //        partS.push_back(std::move(S1));
     }
+    omp_set_num_threads(m_num_part);
 #pragma omp parallel for
     for(int part = 0; part < m_num_part; ++part){
         //1.装配三角形单元线性部分
@@ -1591,8 +1623,10 @@ int CTemp2DFEMCore::DRDDTLMSolve()
     for(int iter = 0; iter < MAX_OUTTER_ITER; ++iter){
         pos = pos1;
         F = F1;
+        omp_set_num_threads(m_num_part);
 #pragma omp parallel for
         for(int part = 0; part < m_num_part; ++part){
+            qDebug() << "Part" << part << "TLM assemble start. Thread = " << omp_get_thread_num();
             double Se;
             //1.入射装配过程，每个部分装配上交界点
             for(int i = 0; i < interfacePoints.size(); ++i){
@@ -1612,14 +1646,15 @@ int CTemp2DFEMCore::DRDDTLMSolve()
                 }
                 ++pos[part];
             }
-            QVector<int> pos2 = pos;
-            QVector<vec> F2 = F;
+            qDebug() << "Part" << part << "TLM assemble finish. Thread = " << omp_get_thread_num();
+            int pos2 = pos[part];
+            vec F2 = F[part];
             //2.每个part的迭代过程
             const int MAX_INNER_ITER = 500;
             const double inner_precision = 1e-6;
             for(int inner_iter = 0; inner_iter < MAX_INNER_ITER; ++inner_iter){
-                pos = pos2;
-                F = F2;
+                pos[part] = pos2;
+                F[part] = F2;
                 //2.1 装配非线性部分三角形单元
                 for(int k = 0; k < m_num_TriEle; ++k){
                     int epart = epartTable[k];
@@ -1765,8 +1800,7 @@ int CTemp2DFEMCore::DRDDTLMSolve()
     }
 
     //整合结果
-    std::ofstream mytemp("../tempFEM/test/temp.txt");
-    double temp[751];
+    double temp[999];
     for(int part = 0; part < m_num_part; part++){
         for(int i = 0; i < m_num_pts; i++){
             int n = npart[part][i];
@@ -1775,8 +1809,11 @@ int CTemp2DFEMCore::DRDDTLMSolve()
             }
         }
     }
-    for(int i = 0; i < m_num_pts; i++){
-        mytemp << temp[i] << endl;
+    char fpath[256];
+    sprintf(fpath,"../tempFEM/test/TempNR_%d.txt",m_num_TriEle);
+    std::ofstream mytemp(fpath);
+    for(int i = 0; i < m_num_pts; ++i){
+        mytemp << mp_2DNode[i].x << " " << mp_2DNode[i].y << " " << temp[i] << endl;
     }
     return 0;
 }

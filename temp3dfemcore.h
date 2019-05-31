@@ -43,7 +43,7 @@ private:
     CTetElement *mp_TetEle;
     int *m_tpartTable;    //保存三角形单元在第几个分区
     int *m_npartTable;    //保存节点在第几个分区
-    const double Precision{1e-4};
+    const double Precision{1e-8};
 };
 
 #endif // TEMP3DFEMCORE_H

@@ -490,12 +490,12 @@ int CTemp3DFEMCore::Static3DAssemble()
     dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
     if (info == 0) {
         qDebug()<<"Ok.";
-        std::ofstream myTemp3D("../tempFEM/test/Temp3D.txt");
+        std::ofstream myTemp3D("../tempFEM/test/Temp3D_contactor.txt");
         /* This is how you could access the solution matrix. */
         double *sol = (double*)((DNformat*)B.Store)->nzval;
         for(int i = 0; i < m_num_pts; ++i){
-            mp_3DNode[i].V = sol[i];
-            myTemp3D << mp_3DNode[i].V << endl;
+//            mp_3DNode[i].V = sol[i];
+            myTemp3D << mp_3DNode[i].x << " " << mp_3DNode[i].y << " " << mp_3DNode[i].z << " " << sol[i] << endl;
         }
         myTemp3D.close();
     }else {
@@ -1488,14 +1488,14 @@ int CTemp3DFEMCore::NRSolve()
 
         dgssv(&options, &sluA, perm_c, perm_r, &L, &U, &B, &stat, &info);
         if (info == 0) {
-            std::ofstream myTemp3D("../tempFEM/test/Temp3D.txt");
+//            std::ofstream myTemp3D("../tempFEM/test/Temp3D.txt");
             /* This is how you could access the solution matrix. */
             double *sol = (double*)((DNformat*)B.Store)->nzval;
             for(int i = 0; i < m_num_pts; ++i){
                 Va[i] = sol[i];
-                myTemp3D << Va[i] << endl;
+//                myTemp3D << Va[i] << endl;
             }
-            myTemp3D.close();
+//            myTemp3D.close();
         }else {
             qDebug() << "info = " << info;
         }
@@ -1531,10 +1531,12 @@ int CTemp3DFEMCore::NRSolve()
         }
     }
     //输出结果
-    std::ofstream mytemp("../tempFEM/test/temp.txt");
-    double temp[15076];
+    char fpath[256];
+    sprintf(fpath,"../tempFEM/test/Temp3DNR_%d.txt",m_num_TetEle);
+    std::ofstream mytemp(fpath);
+//    double temp[15076];
     for(int i = 0; i < m_num_pts; i++){
-        mytemp << Va[i] << endl;
+         mytemp << mp_3DNode[i].x << " " << mp_3DNode[i].y << " " << mp_3DNode[i].z << " " << Va[i] << endl;
     }
 
     qDebug()<<"Ok.";
@@ -1595,7 +1597,7 @@ int CTemp3DFEMCore::NRDDTLMSolve()
         tl[i] = (CInterfacePoint *)malloc(interfacePoints.size() * sizeof(CInterfacePoint));
         for(int j = 0;j < interfacePoints.size();++j){
             tl[i][j].Vi = 0;
-            tl[i][j].Y0 = 0.05;
+            tl[i][j].Y0 = 0.001;
         }
         //输出每个分区单元数目
         qDebug()<<"Number of tet elements in partition "<<i<<" is "<<num_Tet_part[i];
@@ -1782,7 +1784,7 @@ int CTemp3DFEMCore::NRDDTLMSolve()
             vec F2 = F[part];
             //2.每个part的迭代过程
             const int MAX_INNER_ITER = 500;
-            const double inner_precision = 1e-5;
+            const double inner_precision = 1e-4;
             for(int inner_iter = 0; inner_iter < MAX_INNER_ITER; ++inner_iter){
                 pos[part] = pos2;
                 F[part] = F2;
@@ -1883,7 +1885,7 @@ int CTemp3DFEMCore::NRDDTLMSolve()
                     b += Va[part][i] * Va[part][i];
                 }
                 inner_error = sqrt(a0)/sqrt(b);
-                //                qDebug() << "inner_error part " << part << " = " << inner_error;
+//                qDebug() << "inner_error part " << part << " = " << inner_error;
                 if(inner_error < inner_precision){
                     qDebug() << "thread :" << omp_get_thread_num() << "inner iteration finish.";
                     break;
@@ -1932,7 +1934,7 @@ int CTemp3DFEMCore::NRDDTLMSolve()
     }
 
     //整合结果
-    std::ofstream mytemp("../tempFEM/test/temp.txt");
+    std::ofstream mytemp("../tempFEM/test/tempDDTLM.txt");
     double temp[15076];
     for(int part = 0; part < m_num_part; part++){
         for(int i = 0; i < m_num_pts; i++){
