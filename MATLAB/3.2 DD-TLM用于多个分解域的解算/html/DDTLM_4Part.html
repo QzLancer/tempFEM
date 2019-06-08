@@ -1,0 +1,520 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>DDTLM_4Part</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-12"><meta name="DC.source" content="DDTLM_4Part.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%&#36890;&#36807;&#20256;&#36755;&#32447;&#26469;&#23454;&#29616;&#34987;&#20998;&#35299;&#30340;&#22235;&#20010;&#21306;&#22495;&#30340;&#20449;&#24687;&#20132;&#25442;</span>
+<span class="comment">%&#21644;&#20108;&#20998;&#22495;&#19981;&#21516;&#30340;&#22320;&#26041;&#22312;&#20110;&#20132;&#30028;&#28857;&#30340;&#22788;&#29702;&#65292;&#36739;&#20026;&#40635;&#28902;</span>
+<span class="comment">%By QzLancer</span>
+<span class="comment">%2019/4/11</span>
+<span class="comment">%-----------------------------&#35835;&#21462;&#25991;&#20214;</span>
+close <span class="string">all</span>;
+clear <span class="string">all</span>;
+[Coor,VtxElement,VtxEntity,EdgElement,EdgEntity,TriElement,TriEntity] = readcomsol(<span class="string">'mesh_source.mphtxt'</span>);
+[fileID] = fopen(<span class="string">'mesh_source.mpmetis.epart.4'</span>);
+ePartTable = fscanf(fileID,<span class="string">'%d\n'</span>);
+ePartTable = ePartTable+1;
+[fileID] = fopen(<span class="string">'mesh_source.mpmetis.npart.4'</span>);
+nPartTable = fscanf(fileID,<span class="string">'%d\n'</span>);
+nPartTable = nPartTable+1;
+Y0 = 1;
+e = 0.1;
+Temp = 273.15;
+PartAmount = max(nPartTable);
+<span class="comment">%------------------------------&#24471;&#21040;&#27599;&#20010;Part&#21253;&#21547;&#30340;Element&#21644;Node&#32534;&#21495;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartTriElementNum{m} = find(ePartTable==m);
+    PartNodeNum{m} = find(nPartTable==m);
+<span class="keyword">end</span>
+<span class="comment">% -----------------------------&#35835;&#21462;&#20132;&#30028;&#22788;&#30340;&#33410;&#28857;&#65292;&#26500;&#25104;&#33410;&#28857;&#30697;&#38453;</span>
+EleNodeTable = nPartTable(TriElement);
+k = 1;
+<span class="keyword">for</span> i = 1:length(ePartTable)
+    <span class="keyword">for</span> j = 1:3
+        <span class="keyword">if</span> EleNodeTable(i,j) ~= ePartTable(i)
+            JunNodeNum(k,1) = TriElement(i,j);
+            k = k+1;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+JunNodeNum = unique(JunNodeNum);
+JunNodeTable = zeros(length(JunNodeNum),PartAmount);
+<span class="keyword">for</span> i = 1:length(ePartTable)
+    <span class="keyword">for</span> j = 1:3
+        <span class="keyword">if</span> EleNodeTable(i,j) ~= ePartTable(i)
+            JunNodeTable(JunNodeNum==TriElement(i,j),EleNodeTable(i,j)) = <span class="keyword">...</span>
+                bitor(JunNodeTable(JunNodeNum==TriElement(i,j),EleNodeTable(i,j)),1);
+            JunNodeTable(JunNodeNum==TriElement(i,j),ePartTable(i)) = <span class="keyword">...</span>
+                bitor(JunNodeTable(JunNodeNum==TriElement(i,j),ePartTable(i)),1);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#28155;&#21152;&#20132;&#30028;&#22788;&#32534;&#21495;&#65292;&#24182;&#19988;&#33719;&#24471;&#20132;&#30028;&#22788;&#33410;&#28857;&#22312;&#27599;&#20010;Part&#20013;&#30340;&#32534;&#21495;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartJunNodeNumGlobal{m} = JunNodeNum(JunNodeTable(:,m)==1);
+    PartNodeNum{m} = unique([PartNodeNum{m};PartJunNodeNumGlobal{m}]);
+    <span class="keyword">for</span> i = 1:length(PartJunNodeNumGlobal{m})
+        PartJunNodeNum{m}(i) = find(PartNodeNum{m}==PartJunNodeNumGlobal{m}(i));
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#27599;&#20010;Part&#20013;&#30340;Element&#20013;&#30340;Node&#37325;&#26032;&#32534;&#21495;&#20026;&#35813;Part&#20013;&#30340;&#33410;&#28857;&#32534;&#21495;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartTriElement{m} = TriElement(PartTriElementNum{m},:);
+    <span class="keyword">for</span> j = 1:3
+        <span class="keyword">for</span> i = 1:length(PartTriElement{m})
+            PartTriElement{m}(i,j) = find(PartNodeNum{m} == PartTriElement{m}(i,j));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#27599;&#20010;&#21333;&#20803;&#30340;&#33410;&#28857;&#22352;&#26631;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartCoor{m} = Coor(PartNodeNum{m},:);
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#32472;&#22270;&#39564;&#35777;&#21333;&#20803;&#21644;&#33410;&#28857;&#30340;&#20998;&#31163;&#21644;&#37325;&#26032;&#32534;&#21495;&#26159;&#21542;&#27491;&#30830;</span>
+<span class="comment">% plot(PartCoor{1}(:,1),PartCoor{1}(:,2),'.r');</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% plot(PartCoor{2}(:,1),PartCoor{2}(:,2),'.g');</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% plot(PartCoor{3}(:,1),PartCoor{3}(:,2),'.b');</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% plot(PartCoor{4}(:,1),PartCoor{4}(:,2),'.y');</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% subplot(1,2,1);</span>
+<span class="comment">% for m = 1:PartAmount</span>
+<span class="comment">%     for i = 1:3</span>
+<span class="comment">%         PartElementCoorX{m}(:,i) = PartCoor{m}(PartTriElement{m}(:,i),1);</span>
+<span class="comment">%         PartElementCoorY{m}(:,i) = PartCoor{m}(PartTriElement{m}(:,i),2);</span>
+<span class="comment">%     end</span>
+<span class="comment">% end</span>
+<span class="comment">% patch(PartElementCoorX{1}',PartElementCoorY{1}','red','FaceAlpha',.3);</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% patch(PartElementCoorX{2}',PartElementCoorY{2}','green','FaceAlpha',.3);</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% patch(PartElementCoorX{3}',PartElementCoorY{3}','blue','FaceAlpha',.3);</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% patch(PartElementCoorX{4}',PartElementCoorY{4}','yellow','FaceAlpha',.3);</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% axis equal;</span>
+<span class="comment">% plot(PartCoor{1}(PartJunNodeNum{1},1),PartCoor{1}(PartJunNodeNum{1},2),'.w');</span>
+<span class="comment">% hold on;</span>
+<span class="comment">%------------------------------&#27599;&#20010;&#21333;&#20803;&#38656;&#35201;&#30340;&#22522;&#26412;&#20960;&#20309;&#21442;&#25968;</span>
+<span class="comment">%-----&#20840;&#23616;&#21333;&#20803;&#20960;&#20309;&#21442;&#25968;&#27714;&#35299;</span>
+<span class="comment">%&#23548;&#20986;&#25152;&#26377;&#19977;&#35282;&#24418;&#21333;&#20803;RZ&#36724;&#30340;&#22352;&#26631;</span>
+R = Coor(:,1);
+Z = Coor(:,2);
+TriR = R(TriElement);
+TriZ = Z(TriElement);
+<span class="comment">%&#35745;&#31639;&#20986;&#25152;&#26377;&#21333;&#20803;&#30340;p,q,r&#21644;Area</span>
+p(:,1) = TriR(:,2).*TriZ(:,3) - TriZ(:,2).*TriR(:,3);
+p(:,2) = TriR(:,3).*TriZ(:,1) - TriZ(:,3).*TriR(:,1);
+p(:,3) = TriR(:,1).*TriZ(:,2) - TriZ(:,1).*TriR(:,2);
+q(:,1) = TriZ(:,2) - TriZ(:,3);
+q(:,2) = TriZ(:,3) - TriZ(:,1);
+q(:,3) = TriZ(:,1) - TriZ(:,2);
+r(:,1) = TriR(:,3) - TriR(:,2);
+r(:,2) = TriR(:,1) - TriR(:,3);
+r(:,3) = TriR(:,2) - TriR(:,1);
+Area = (q(:,1).*r(:,2) - q(:,2).*r(:,1))/2;
+<span class="comment">% &#19977;&#35282;&#24418;&#25152;&#26377;&#21333;&#20803;&#30340;&#37325;&#24515;&#22788;&#30340;&#21322;&#24452;</span>
+TriRadius = (TriR(:,1)+TriR(:,2)+TriR(:,3))./3;
+<span class="comment">%-----&#27599;&#20010;Part&#30340;&#20960;&#20309;&#21442;&#25968;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartR{m} = R(PartNodeNum{m});
+    PartZ{m} = Z(PartNodeNum{m});
+    PartTriR{m} = TriR(PartTriElementNum{m},:);
+    Partp{m} = p(PartTriElementNum{m},:);
+    Partq{m} = q(PartTriElementNum{m},:);
+    Partr{m} = r(PartTriElementNum{m},:);
+    PartArea{m} = Area(PartTriElementNum{m});
+    PartTriRadius{m} = TriRadius(PartTriElementNum{m});
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#27714;&#20986;&#27599;&#20010;Part&#30340;&#36127;&#36733;&#21644;&#28909;&#23548;&#29575;&#21333;&#20803;</span>
+Cond = 52;
+SourceElement = find(TriEntity==2);
+SourceTable = ePartTable(SourceElement);
+<span class="keyword">for</span> m = 1:PartAmount
+    PartSource{m} = zeros(length(PartTriElementNum{m}),1);
+    PartSourceElementNum{m} = SourceElement(SourceTable==m);
+    <span class="keyword">for</span> j = 1:length(PartSourceElementNum{m})
+        PartSourceElementNum{m}(j) = find(PartTriElementNum{m} == PartSourceElementNum{m}(j));
+    <span class="keyword">end</span>
+    PartSource{m}(PartSourceElementNum{m}) = 10000000;
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#27599;&#20010;Part&#30340;&#21333;&#20803;&#20998;&#26512;&#21644;&#24635;&#20307;&#21512;&#25104;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartS{m} = zeros(length(PartNodeNum{m}));
+    PartF{m} = zeros(length(PartNodeNum{m}),1);
+    <span class="keyword">for</span> k = 1:length(PartTriElementNum{m})
+        <span class="keyword">for</span> i = 1:3
+            <span class="keyword">for</span> j = 1:3
+                Se = (pi*Cond*PartTriRadius{m}(k)*(Partr{m}(k,i)*Partr{m}(k,j) + Partq{m}(k,i)*Partq{m}(k,j)))/(2*PartArea{m}(k));
+                PartS{m}(PartTriElement{m}(k,i),PartTriElement{m}(k,j)) = PartS{m}(PartTriElement{m}(k,i),PartTriElement{m}(k,j)) + Se;
+            <span class="keyword">end</span>
+            Fe = pi*PartSource{m}(k)*PartArea{m}(k)*(PartR{m}(PartTriElement{m}(k,i))+3*PartTriRadius{m}(k))/6;
+            PartF{m}(PartTriElement{m}(k,i)) = PartF{m}(PartTriElement{m}(k,i)) + Fe;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">%------------------------------TLM&#36845;&#20195;&#36807;&#31243;&#65292;&#27599;&#20010;Part&#29992;&#30452;&#25509;&#27861;&#27714;&#35299;&#20837;&#23556;&#36807;&#31243;</span>
+<span class="comment">%-----&#26816;&#32034;&#20986;&#36793;&#30028;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartBoundary{m} = find(PartZ{m}==0 | PartZ{m}==0.14 | PartR{m}==0.1);
+    PartFreeNodes{m} = find(~(PartZ{m}==0 | PartZ{m}==0.14 | PartR{m}==0.1));
+<span class="keyword">end</span>
+<span class="comment">%-----&#20837;&#23556;&#21644;&#21453;&#23556;&#36807;&#31243;&#22522;&#26412;&#21442;&#25968;&#21021;&#22987;&#21270;</span>
+<span class="keyword">for</span> m = 1:PartAmount
+    PartY{m} = zeros(length(PartS{m}));
+    PartI{m} = zeros(length(PartF{m}),1);
+    PartVa{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartVc{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartVi{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartVr{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartV0{m} = zeros(length(PartNodeNum{m}),1);
+    PartV1{m} = ones(length(PartNodeNum{m}),1);
+    <span class="keyword">for</span> i = 1:length(PartJunNodeNum{m})
+        PartY{m}(PartJunNodeNum{m}(i),PartJunNodeNum{m}(i)) = Y0;<span class="comment">%&#36824;&#26159;&#35201;&#23545;&#35282;&#32447;&#19968;&#20010;&#20010;&#36171;&#20540;</span>
+    <span class="keyword">end</span>
+    PartSi{m} = PartS{m}+PartY{m};
+<span class="keyword">end</span>
+<span class="comment">%-----&#36845;&#20195;&#36807;&#31243;</span>
+n=0;
+<span class="keyword">while</span> (norm(PartV1{1}-PartV0{1})&gt;e)|(norm(PartV1{2}-PartV0{2})&gt;e)|<span class="keyword">...</span>
+        (norm(PartV1{3}-PartV0{3})&gt;e)|(norm(PartV1{4}-PartV0{4})&gt;e)
+<span class="comment">% while (norm(PartV1{1}-PartV0{1})&gt;e)|(norm(PartV1{2}-PartV0{2})&gt;e)|...</span>
+    PartV0 = PartV1;
+    <span class="comment">%&#20837;&#23556;&#36807;&#31243;&#27714;&#35299;</span>
+    <span class="keyword">for</span> m = 1:PartAmount
+        PartI{m}(PartJunNodeNum{m}) = 2*PartVi{m}*Y0;
+        PartFi{m} = PartF{m}+PartI{m};
+        PartV1{m} = zeros(length(PartNodeNum{m}),1);
+        PartV1{m}(PartBoundary{m}) = Temp;
+        PartFi{m}(PartFreeNodes{m}) = PartFi{m}(PartFreeNodes{m})-PartSi{m}(PartFreeNodes{m},:)*PartV1{m};
+        PartV1{m}(PartFreeNodes{m}) = PartSi{m}(PartFreeNodes{m},PartFreeNodes{m})\PartFi{m}(PartFreeNodes{m});
+        PartVa{m} = PartV1{m}(PartJunNodeNum{m});
+        PartVr{m} = PartVa{m} - PartVi{m};
+    <span class="keyword">end</span>
+    <span class="comment">%&#21453;&#23556;&#36807;&#31243;&#27714;&#35299;</span>
+    Vc = zeros(length(JunNodeNum),1);
+    <span class="keyword">for</span> i = 1:length(JunNodeNum)
+        j = 0;
+        <span class="keyword">for</span> m = 1:PartAmount
+            <span class="keyword">if</span> JunNodeTable(i,m) == 1
+                Vc(i) = Vc(i)+2*PartVr{m}(PartJunNodeNumGlobal{m}==JunNodeNum(i));
+                j = j+1;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        Vc(i) = Vc(i)/j;
+    <span class="keyword">end</span>
+    <span class="keyword">for</span> m = 1:PartAmount
+        <span class="keyword">for</span> i = 1:length(PartJunNodeNumGlobal{m})
+            PartVc{m}(i) = Vc(JunNodeNum==PartJunNodeNumGlobal{m}(i));
+        <span class="keyword">end</span>
+        PartVi{m} = PartVc{m} - PartVr{m};
+    <span class="keyword">end</span>
+    n = n+1;
+<span class="keyword">end</span>
+<span class="comment">%------------------------------&#21518;&#22788;&#29702;</span>
+V = zeros(length(Coor),1);
+<span class="keyword">for</span> m = 1:PartAmount
+    <span class="keyword">for</span> i = 1:length(PartNodeNum{m})
+        V(PartNodeNum{m}(i)) = PartV1{m}(i);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+Interp1 = scatteredInterpolant(R,Z,V);
+tx = 0.02:1e-3:0.1;
+ty = 0:1e-3:0.14;
+[qx,qy] = meshgrid(tx,ty);
+qz = Interp1(qx,qy);
+subplot(1,2,2);
+contourf(qx,qy,qz,20);colorbar;
+</pre><img vspace="5" hspace="5" src="DDTLM_4Part_01.png" style="width:560px;height:420px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%通过传输线来实现被分解的四个区域的信息交换
+%和二分域不同的地方在于交界点的处理，较为麻烦
+%By QzLancer
+%2019/4/11
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-读取文件
+close all;
+clear all;
+[Coor,VtxElement,VtxEntity,EdgElement,EdgEntity,TriElement,TriEntity] = readcomsol('mesh_source.mphtxt');
+[fileID] = fopen('mesh_source.mpmetis.epart.4');
+ePartTable = fscanf(fileID,'%d\n');
+ePartTable = ePartTable+1;
+[fileID] = fopen('mesh_source.mpmetis.npart.4');
+nPartTable = fscanf(fileID,'%d\n');
+nPartTable = nPartTable+1;
+Y0 = 1;
+e = 0.1;
+Temp = 273.15;
+PartAmount = max(nPartTable);
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH得到每个Part包含的Element和Node编号
+for m = 1:PartAmount
+    PartTriElementNum{m} = find(ePartTable==m);
+    PartNodeNum{m} = find(nPartTable==m);
+end
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-读取交界处的节点，构成节点矩阵
+EleNodeTable = nPartTable(TriElement);
+k = 1;
+for i = 1:length(ePartTable)
+    for j = 1:3
+        if EleNodeTable(i,j) ~= ePartTable(i)
+            JunNodeNum(k,1) = TriElement(i,j);
+            k = k+1;
+        end
+    end
+end
+JunNodeNum = unique(JunNodeNum);
+JunNodeTable = zeros(length(JunNodeNum),PartAmount);
+for i = 1:length(ePartTable)
+    for j = 1:3
+        if EleNodeTable(i,j) ~= ePartTable(i)
+            JunNodeTable(JunNodeNum==TriElement(i,j),EleNodeTable(i,j)) = ...
+                bitor(JunNodeTable(JunNodeNum==TriElement(i,j),EleNodeTable(i,j)),1);
+            JunNodeTable(JunNodeNum==TriElement(i,j),ePartTable(i)) = ...
+                bitor(JunNodeTable(JunNodeNum==TriElement(i,j),ePartTable(i)),1);            
+        end
+    end
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH添加交界处编号，并且获得交界处节点在每个Part中的编号
+for m = 1:PartAmount
+    PartJunNodeNumGlobal{m} = JunNodeNum(JunNodeTable(:,m)==1);
+    PartNodeNum{m} = unique([PartNodeNum{m};PartJunNodeNumGlobal{m}]);
+    for i = 1:length(PartJunNodeNumGlobal{m})
+        PartJunNodeNum{m}(i) = find(PartNodeNum{m}==PartJunNodeNumGlobal{m}(i));
+    end
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH每个Part中的Element中的Node重新编号为该Part中的节点编号
+for m = 1:PartAmount
+    PartTriElement{m} = TriElement(PartTriElementNum{m},:);
+    for j = 1:3
+        for i = 1:length(PartTriElement{m})
+            PartTriElement{m}(i,j) = find(PartNodeNum{m} == PartTriElement{m}(i,j));
+        end
+    end
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH每个单元的节点坐标
+for m = 1:PartAmount
+    PartCoor{m} = Coor(PartNodeNum{m},:);
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH绘图验证单元和节点的分离和重新编号是否正确
+% plot(PartCoor{1}(:,1),PartCoor{1}(:,2),'.r');
+% hold on;
+% plot(PartCoor{2}(:,1),PartCoor{2}(:,2),'.g');
+% hold on;
+% plot(PartCoor{3}(:,1),PartCoor{3}(:,2),'.b');
+% hold on;
+% plot(PartCoor{4}(:,1),PartCoor{4}(:,2),'.y');
+% hold on;
+% subplot(1,2,1);
+% for m = 1:PartAmount
+%     for i = 1:3
+%         PartElementCoorX{m}(:,i) = PartCoor{m}(PartTriElement{m}(:,i),1);
+%         PartElementCoorY{m}(:,i) = PartCoor{m}(PartTriElement{m}(:,i),2);
+%     end
+% end
+% patch(PartElementCoorX{1}',PartElementCoorY{1}','red','FaceAlpha',.3);
+% hold on;
+% patch(PartElementCoorX{2}',PartElementCoorY{2}','green','FaceAlpha',.3);
+% hold on;
+% patch(PartElementCoorX{3}',PartElementCoorY{3}','blue','FaceAlpha',.3);
+% hold on;
+% patch(PartElementCoorX{4}',PartElementCoorY{4}','yellow','FaceAlpha',.3);
+% hold on;
+% axis equal;
+% plot(PartCoor{1}(PartJunNodeNum{1},1),PartCoor{1}(PartJunNodeNum{1},2),'.w');
+% hold on;
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH每个单元需要的基本几何参数
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-全局单元几何参数求解
+%导出所有三角形单元RZ轴的坐标
+R = Coor(:,1);
+Z = Coor(:,2);
+TriR = R(TriElement);
+TriZ = Z(TriElement);
+%计算出所有单元的p,q,r和Area
+p(:,1) = TriR(:,2).*TriZ(:,3) - TriZ(:,2).*TriR(:,3);
+p(:,2) = TriR(:,3).*TriZ(:,1) - TriZ(:,3).*TriR(:,1);
+p(:,3) = TriR(:,1).*TriZ(:,2) - TriZ(:,1).*TriR(:,2);
+q(:,1) = TriZ(:,2) - TriZ(:,3);
+q(:,2) = TriZ(:,3) - TriZ(:,1);
+q(:,3) = TriZ(:,1) - TriZ(:,2);
+r(:,1) = TriR(:,3) - TriR(:,2);
+r(:,2) = TriR(:,1) - TriR(:,3);
+r(:,3) = TriR(:,2) - TriR(:,1);
+Area = (q(:,1).*r(:,2) - q(:,2).*r(:,1))/2;
+% 三角形所有单元的重心处的半径
+TriRadius = (TriR(:,1)+TriR(:,2)+TriR(:,3))./3;
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-每个Part的几何参数
+for m = 1:PartAmount
+    PartR{m} = R(PartNodeNum{m});
+    PartZ{m} = Z(PartNodeNum{m});
+    PartTriR{m} = TriR(PartTriElementNum{m},:);
+    Partp{m} = p(PartTriElementNum{m},:);
+    Partq{m} = q(PartTriElementNum{m},:);
+    Partr{m} = r(PartTriElementNum{m},:);
+    PartArea{m} = Area(PartTriElementNum{m});
+    PartTriRadius{m} = TriRadius(PartTriElementNum{m});
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH求出每个Part的负载和热导率单元
+Cond = 52;
+SourceElement = find(TriEntity==2);
+SourceTable = ePartTable(SourceElement);
+for m = 1:PartAmount
+    PartSource{m} = zeros(length(PartTriElementNum{m}),1);
+    PartSourceElementNum{m} = SourceElement(SourceTable==m);
+    for j = 1:length(PartSourceElementNum{m})
+        PartSourceElementNum{m}(j) = find(PartTriElementNum{m} == PartSourceElementNum{m}(j));
+    end
+    PartSource{m}(PartSourceElementNum{m}) = 10000000; 
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH每个Part的单元分析和总体合成
+for m = 1:PartAmount
+    PartS{m} = zeros(length(PartNodeNum{m}));
+    PartF{m} = zeros(length(PartNodeNum{m}),1);
+    for k = 1:length(PartTriElementNum{m})
+        for i = 1:3
+            for j = 1:3
+                Se = (pi*Cond*PartTriRadius{m}(k)*(Partr{m}(k,i)*Partr{m}(k,j) + Partq{m}(k,i)*Partq{m}(k,j)))/(2*PartArea{m}(k));
+                PartS{m}(PartTriElement{m}(k,i),PartTriElement{m}(k,j)) = PartS{m}(PartTriElement{m}(k,i),PartTriElement{m}(k,j)) + Se;
+            end
+            Fe = pi*PartSource{m}(k)*PartArea{m}(k)*(PartR{m}(PartTriElement{m}(k,i))+3*PartTriRadius{m}(k))/6;
+            PartF{m}(PartTriElement{m}(k,i)) = PartF{m}(PartTriElement{m}(k,i)) + Fe;
+        end
+    end
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHTLM迭代过程，每个Part用直接法求解入射过程
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-检索出边界
+for m = 1:PartAmount
+    PartBoundary{m} = find(PartZ{m}==0 | PartZ{m}==0.14 | PartR{m}==0.1);
+    PartFreeNodes{m} = find(~(PartZ{m}==0 | PartZ{m}==0.14 | PartR{m}==0.1));    
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-入射和反射过程基本参数初始化
+for m = 1:PartAmount
+    PartY{m} = zeros(length(PartS{m}));
+    PartI{m} = zeros(length(PartF{m}),1);
+    PartVa{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartVc{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartVi{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartVr{m} = zeros(length(PartJunNodeNum{m}),1);
+    PartV0{m} = zeros(length(PartNodeNum{m}),1);
+    PartV1{m} = ones(length(PartNodeNum{m}),1);
+    for i = 1:length(PartJunNodeNum{m})
+        PartY{m}(PartJunNodeNum{m}(i),PartJunNodeNum{m}(i)) = Y0;%还是要对角线一个个赋值
+    end
+    PartSi{m} = PartS{m}+PartY{m};
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-迭代过程
+n=0;
+while (norm(PartV1{1}-PartV0{1})>e)|(norm(PartV1{2}-PartV0{2})>e)|...
+        (norm(PartV1{3}-PartV0{3})>e)|(norm(PartV1{4}-PartV0{4})>e)
+% while (norm(PartV1{1}-PartV0{1})>e)|(norm(PartV1{2}-PartV0{2})>e)|...
+    PartV0 = PartV1;
+    %入射过程求解
+    for m = 1:PartAmount
+        PartI{m}(PartJunNodeNum{m}) = 2*PartVi{m}*Y0;
+        PartFi{m} = PartF{m}+PartI{m};
+        PartV1{m} = zeros(length(PartNodeNum{m}),1);
+        PartV1{m}(PartBoundary{m}) = Temp;
+        PartFi{m}(PartFreeNodes{m}) = PartFi{m}(PartFreeNodes{m})-PartSi{m}(PartFreeNodes{m},:)*PartV1{m};
+        PartV1{m}(PartFreeNodes{m}) = PartSi{m}(PartFreeNodes{m},PartFreeNodes{m})\PartFi{m}(PartFreeNodes{m});
+        PartVa{m} = PartV1{m}(PartJunNodeNum{m});
+        PartVr{m} = PartVa{m} - PartVi{m};
+    end
+    %反射过程求解
+    Vc = zeros(length(JunNodeNum),1);
+    for i = 1:length(JunNodeNum)
+        j = 0;
+        for m = 1:PartAmount
+            if JunNodeTable(i,m) == 1
+                Vc(i) = Vc(i)+2*PartVr{m}(PartJunNodeNumGlobal{m}==JunNodeNum(i));
+                j = j+1;
+            end
+        end
+        Vc(i) = Vc(i)/j;
+    end
+    for m = 1:PartAmount
+        for i = 1:length(PartJunNodeNumGlobal{m})
+            PartVc{m}(i) = Vc(JunNodeNum==PartJunNodeNumGlobal{m}(i));
+        end
+        PartVi{m} = PartVc{m} - PartVr{m};
+    end
+    n = n+1;
+end
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH后处理
+V = zeros(length(Coor),1);
+for m = 1:PartAmount
+    for i = 1:length(PartNodeNum{m})    
+        V(PartNodeNum{m}(i)) = PartV1{m}(i);
+    end
+end
+Interp1 = scatteredInterpolant(R,Z,V);
+tx = 0.02:1e-3:0.1;
+ty = 0:1e-3:0.14;
+[qx,qy] = meshgrid(tx,ty);
+qz = Interp1(qx,qy);
+subplot(1,2,2);
+contourf(qx,qy,qz,20);colorbar;
+##### SOURCE END #####
+--></body></html>
